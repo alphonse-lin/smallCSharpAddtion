@@ -701,64 +701,64 @@ namespace UrbanX.Application
             #endregion
 
             #region 002_计算射线指标
-            var jsonFilePath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\building_center.geojson";
-            //var jsonFilePath = @"C:\Users\CAUPD-BJ141\Desktop\西安建筑基底_32650.geojson";
-            string exportPath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\export_collection_center.obj";
+            //var jsonFilePath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\building_center.geojson";
+            ////var jsonFilePath = @"C:\Users\CAUPD-BJ141\Desktop\西安建筑基底_32650.geojson";
+            //string exportPath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\export_collection_center.obj";
 
-            //读取mesh
-            var inputDataCollection = MeshCreation.ReadJsonData(jsonFilePath, "brepHeight", out double[] heightCollection);
-            ToolManagers.TimeCalculation(start, "读取");
+            ////读取mesh
+            //var inputDataCollection = MeshCreation.ReadJsonData(jsonFilePath, "brepHeight", out double[] heightCollection);
+            //ToolManagers.TimeCalculation(start, "读取");
 
-            //创建mesh simple，输出中心点与面积
-            var simpleMesh=MeshCreation.ExtrudeMeshFromPtMinusTopBtn(inputDataCollection, heightCollection, out Dictionary<NetTopologySuite.Geometries.Point, double> secPtDic);
-            ToolManagers.TimeCalculation(start, "挤出mesh并输出数据");
+            ////创建mesh simple，输出中心点与面积
+            //var simpleMesh=MeshCreation.ExtrudeMeshFromPtMinusTopBtn(inputDataCollection, heightCollection, out Dictionary<NetTopologySuite.Geometries.Point, double> secPtDic);
+            //ToolManagers.TimeCalculation(start, "挤出mesh并输出数据");
 
-            //初始化可视点数据
-            var ptOrigin = new List<NetTopologySuite.Geometries.Point>() {
-                new  NetTopologySuite.Geometries.Point(0,0),
-                new  NetTopologySuite.Geometries.Point(-100,-100),
-                new  NetTopologySuite.Geometries.Point(-200,-200),
-                new  NetTopologySuite.Geometries.Point(-300,-300),
-                new  NetTopologySuite.Geometries.Point(-400,-400),
-            };
-            var count = 1;
-            var ptLargeList = new List<NetTopologySuite.Geometries.Point>(count * ptOrigin.Count);
-            
-            for (int i = 0; i < count; i++)
-                ptLargeList.AddRange(ptOrigin);
-            ToolManagers.TimeCalculation(start, "初始化数据");
+            ////初始化可视点数据
+            //var ptOrigin = new List<NetTopologySuite.Geometries.Point>() {
+            //    new  NetTopologySuite.Geometries.Point(0,0),
+            //    new  NetTopologySuite.Geometries.Point(-100,-100),
+            //    new  NetTopologySuite.Geometries.Point(-200,-200),
+            //    new  NetTopologySuite.Geometries.Point(-300,-300),
+            //    new  NetTopologySuite.Geometries.Point(-400,-400),
+            //};
+            //var count = 1;
+            //var ptLargeList = new List<NetTopologySuite.Geometries.Point>(count * ptOrigin.Count);
 
-            //开始计算可视范围内的点，及所包含建筑的总面积（去除顶面和底面）
-            var wholePtList=Poly2DCreation.ContainsInPts(ptLargeList.ToArray(), secPtDic.Keys.ToArray(), 300);
-            var wholeAreaList = Poly2DCreation.ContainsAreaInPts(wholePtList, secPtDic);
-            ToolManagers.TimeCalculation(start, "计算范围内总面积");
+            //for (int i = 0; i < count; i++)
+            //    ptLargeList.AddRange(ptOrigin);
+            //ToolManagers.TimeCalculation(start, "初始化数据");
 
-            //创建细分mesh
-            var remeshedMesh = MeshCreation.SimpleRemesher(simpleMesh,10, 0.5);
-            ToolManagers.TimeCalculation(start, "细分");
+            ////开始计算可视范围内的点，及所包含建筑的总面积（去除顶面和底面）
+            //var wholePtList=Poly2DCreation.ContainsInPts(ptLargeList.ToArray(), secPtDic.Keys.ToArray(), 300);
+            //var wholeAreaList = Poly2DCreation.ContainsAreaInPts(wholePtList, secPtDic);
+            //ToolManagers.TimeCalculation(start, "计算范围内总面积");
 
-            //计算射线及比例，按照largeList顺序
-            var visibleAreaList = MeshCreation.CalcRaysGetArea(remeshedMesh, MeshCreation.NTSPtList2Vector3dList(ptLargeList), 10, 100, 360, 200, 14);
-            ToolManagers.TimeCalculation(start, "计算射线");
+            ////创建细分mesh
+            //var remeshedMesh = MeshCreation.SimpleRemesher(simpleMesh,10, 0.5);
+            //ToolManagers.TimeCalculation(start, "细分");
 
-            var visibilityPercentage = MeshCreation.CalcVisibilityPercent(visibleAreaList, wholeAreaList);
-            ToolManagers.TimeCalculation(start, "计算可视总面积");
+            ////计算射线及比例，按照largeList顺序
+            //var visibleAreaList = MeshCreation.CalcRaysGetArea(remeshedMesh, MeshCreation.NTSPtList2Vector3dList(ptLargeList), 10, 100, 360, 200, 14);
+            //ToolManagers.TimeCalculation(start, "计算射线");
 
-            
+            //var visibilityPercentage = MeshCreation.CalcVisibilityPercent(visibleAreaList, wholeAreaList);
+            //ToolManagers.TimeCalculation(start, "计算可视总面积");
 
-            ////输出计算后Mesh
-            //var exportPath_Calc = @"E:\114_temp\008_代码集\002_extras\smallCharpTool\Application\data\geometryTest\export_calc.stl";
-            //MeshCreation.ExportMeshAsStl(exportPath_Calc, meshFromRays, true);
-            //ToolManagers.TimeCalculation(start, "输出计算后模型");
+
+
+            //////输出计算后Mesh
+            ////var exportPath_Calc = @"E:\114_temp\008_代码集\002_extras\smallCharpTool\Application\data\geometryTest\export_calc.stl";
+            ////MeshCreation.ExportMeshAsStl(exportPath_Calc, meshFromRays, true);
+            ////ToolManagers.TimeCalculation(start, "输出计算后模型");
 
             #endregion
 
-
-
             #region SketchUp测试
-            //var filePath = @"E:\114_temp\008_代码集\002_extras\smallCharpTool\Application\data\geometryTest\exportFromRhino.skp";
 
-            //var result= SketchUpManager.GetMeshFromSkp(filePath);
+            #region 读取SU模型
+            var filePath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\exportFromRhino.skp";
+            var result = SketchUpManager.GetMeshFromSkp(filePath);
+            #endregion
             #endregion
 
 
