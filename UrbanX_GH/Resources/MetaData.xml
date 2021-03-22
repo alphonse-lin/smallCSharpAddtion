@@ -1,0 +1,178 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<components>
+  <module name="Urban_Sustainability">
+    <!-- 从类读取，多种计算 -->
+    <component>
+      <id>Urban_Sustainability</id>
+      <name>Urban_Sustainability</name>
+      <nickname>U_Sustain</nickname>
+      <description>index calculation, included EC,WC, GC value</description>
+      <category>UrbanX</category>
+      <subCategory>Urban_Sustainability</subCategory>
+      <inputs>
+        <input id="0" name="siteParameter" nickname="siteP" description="Parameter for index calculation"/>
+      </inputs>
+      <outputs>
+        <output id="0"  name="outputEnergyConsumption" nickname="oEC" description="result EC from site parameter, reuslt=[min,max], unit=kw"/>
+        <output id="1"  name="outputWaterConsumption" nickname="oWC" description="result WC from site parameter, reuslt=[min,max], unit=T"/>
+        <output id="2"  name="outputGarbageConsumption" nickname="oGC" description="result GC from site parameter, reuslt=[min,max], unit=kg"/>
+      </outputs>
+    </component>
+    
+    <!-- 从类读取，能源消耗量计算 -->
+    <component>
+      <id>Urban_Sustainability_Energy</id>
+      <name>Urban_Sustainability_Energy</name>
+      <nickname>U_Sustain_EC</nickname>
+      <description>index calculation, included energy consumption</description>
+      <category>UrbanX</category>
+      <subCategory>Urban_Sustainability</subCategory>
+      <inputs>
+        <input id="0" name="siteParameter" nickname="siteP" description="Parameter for index calculation"/>
+      </inputs>
+      <outputs>
+        <output id="0"  name="outputEnergyConsumption" nickname="oEC" description="result EC from site parameter, reuslt=[min,max], unit=kw"/>
+      </outputs>
+    </component>
+    
+    <!-- 从类读取，水资源消耗量计算-->
+    <component>
+      <id>Urban_Sustainability_Water</id>
+      <name>Urban_Sustainability_Water</name>
+      <nickname>U_Sustain_WC</nickname>
+      <description>index calculation, included water consumption</description>
+      <category>UrbanX</category>
+      <subCategory>Urban_Sustainability</subCategory>
+      <inputs>
+        <input id="0" name="siteParameter" nickname="siteP" description="Parameter for index calculation"/>
+      </inputs>
+      <outputs>
+        <output id="0"  name="outputWaterConsumption" nickname="oWC" description="result WC from site parameter, reuslt=[min,max], unit=T"/>
+      </outputs>
+    </component>
+
+    <!-- 从类读取，固废资源产生量计算-->
+    <component>
+      <id>Urban_Sustainability_Garbage</id>
+      <name>Urban_Sustainability_Garbage</name>
+      <nickname>U_Sustain_GC</nickname>
+      <description>index calculation, included garbage consumption</description>
+      <category>UrbanX</category>
+      <subCategory>Urban_Sustainability</subCategory>
+      <inputs>
+        <input id="0" name="siteParameter" nickname="siteP" description="Parameter for index calculation"/>
+      </inputs>
+      <outputs>
+        <output id="0"  name="outputGarbageConsumption" nickname="oGC" description="result GC from site parameter, reuslt=[min,max], unit=kg"/><output id="0"  name="outputGarbageConsumption" nickname="oGC" description="result GC from site parameter, reuslt=[min,max], unit=kg"/>
+      </outputs>
+    </component>
+
+    <!-- 从现有数据读取，多种计算-->
+    <component>
+      <id>Urban_Sustainability_Custom</id>
+      <name>Urban_Sustainability_Custom</name>
+      <nickname>U_Sustain_C</nickname>
+      <description>index calculation, included EC,WC, GC value based on input objects</description>
+      <category>UrbanX</category>
+      <subCategory>Urban_Sustainability</subCategory>
+      <inputs>
+        <input id="0" name="inputBreps" nickname="inBrep" description="input breps to calculate index value"/>
+        <input id="1" name="inputFunctions" nickname="inFun" description="input functions of each brep, R,C,H,O,GIC,M,W,S"/>
+      </inputs>
+      <outputs>
+        <output id="0"  name="outputEnergyConsumption" nickname="oEC" description="result EC from site parameter, reuslt=[min,max], unit=kw"/>
+        <output id="1"  name="outputWaterConsumption" nickname="oWC" description="result WC from site parameter, reuslt=[min,max], unit=T"/>
+        <output id="2"  name="outputGarbageConsumption" nickname="oGC" description="result GC from site parameter, reuslt=[min,max], unit=kg"/>
+      </outputs>
+    </component>
+
+    <!-- 从现有数据读取，能源消耗量计算-->
+    <component>
+      <id>Urban_Sustainability_Custom_Energy</id>
+      <name>Urban_Sustainability_Custom_Energy</name>
+      <nickname>U_Sustain_C_E</nickname>
+      <description>index calculation, included energy consumption based on input objects</description>
+      <category>UrbanX</category>
+      <subCategory>Urban_Sustainability</subCategory>
+      <inputs>
+        <input id="0" name="inputBreps" nickname="inBrep" description="input breps to calculate index value"/>
+        <input id="1" name="inputFunctions" nickname="inFun" description="input functions of each brep, R,C,H,O,GIC,M,W,S"/>
+      </inputs>
+      <outputs>
+        <output id="0"  name="outputEnergyConsumption" nickname="oEC" description="result EC from site parameter, reuslt=[min,max], unit=kw"/>
+      </outputs>
+    </component>
+    
+    <!-- 从现有数据读取，水资源消耗量计算-->
+    <component>
+      <id>Urban_Sustainability_Custom_Water</id>
+      <name>Urban_Sustainability_Custom_Water</name>
+      <nickname>U_Sustain_C_W</nickname>
+      <description>index calculation, included water consumption based on input objects</description>
+      <category>UrbanX</category>
+      <subCategory>Urban_Sustainability</subCategory>
+      <inputs>
+        <input id="0" name="inputBreps" nickname="inBrep" description="input breps to calculate index value"/>
+        <input id="1" name="inputFunctions" nickname="inFun" description="input functions of each brep, R,C,H,O,GIC,M,W,S"/>
+      </inputs>
+      <outputs>
+        <output id="0"  name="outputWaterConsumption" nickname="oWC" description="result WC from site parameter, reuslt=[min,max], unit=T"/>
+      </outputs>
+    </component>
+
+    <!-- 从现有数据读取，固废资源产生量计算-->
+    <component>
+      <id>Urban_Sustainability_Custom_Garbage</id>
+      <name>Urban_Sustainability_Custom_Garbage</name>
+      <nickname>U_Sustain_C_G</nickname>
+      <description>index calculation, included garbage consumption based on input objects</description>
+      <category>UrbanX</category>
+      <subCategory>Urban_Sustainability</subCategory>
+      <inputs>
+        <input id="0" name="inputBreps" nickname="inBrep" description="input breps to calculate index value"/>
+        <input id="1" name="inputFunctions" nickname="inFun" description="input functions of each brep, R,C,H,O,GIC,M,W,S"/>
+      </inputs>
+      <outputs>
+        <output id="0"  name="outputGarbageConsumption" nickname="oGC" description="result GC from site parameter, reuslt=[min,max], unit=kg"/>
+      </outputs>
+    </component>
+    
+      <!-- 从现有数据读取，建筑曝光率计算-->
+    <component>
+      <id>Urban_Sustainability_ExposureRate</id>
+      <name>Urban_Sustainability_ExposureRate</name>
+      <nickname>U_Sustain_ER</nickname>
+      <description>calculate exposure rate of each side in builidng brep</description>
+      <category>UrbanX</category>
+      <subCategory>Urban_Sustainability</subCategory>
+      <inputs>
+        <input id="0" name="inputBreps" nickname="inBrep" description="input brep list to calculate exposure rate value"/>
+        <input id="1" name="inputPts" nickname="inPts" description="input point list to create rays"/>
+        <input id="2" name="nomalized" nickname="N" description="normalized the exposure rate value"/>
+        <input id="3" name="radius" nickname="R" description="the radius of rays"/>
+        <input id="4" name="segments" nickname="S" description="the segments of rays"/>
+      </inputs>
+      <outputs>
+        <output id="0"  name="outputLines" nickname="L" description="brep outlines in first level"/>
+        <output id="1"  name="outputExposureRates" nickname="ER" description="value for each brep outlines"/>
+      </outputs>
+    </component>
+
+            <!-- 从现有数据读取，计算人口数据-->
+    <component>
+      <id>Urban_Sustainability_CalculatePopulation</id>
+      <name>Urban_Sustainability_CalculatePopulation</name>
+      <nickname>U_Sustain_CP</nickname>
+      <description>calculate population in each residential building</description>
+      <category>UrbanX</category>
+      <subCategory>Urban_Sustainability</subCategory>
+      <inputs>
+        <input id="0" name="inputBreps" nickname="inBrep" description="input brep list to calculate population, unit(m²)"/>
+      </inputs>
+      <outputs>
+        <output id="0"  name="outputPopulation" nickname="outP" description="population in each building"/>
+      </outputs>
+    </component>
+
+  </module>
+</components>

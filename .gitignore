@@ -348,3 +348,19 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
+utility/data/data_layout.xlsx
+utility/data/dataStructure.xmind
+utility/data/test.xml
+utility/data/test_1124.xml
+utility/data/testData.txt
+utility/data/造价表.xlsx
+utility/data/造价表2.xlsx
+utility/data/造价表2_temp.xml
+utility/data/造价表_temp.xml
+*.png
+*.gh
+*.3dm
+*.rhl
+*.mtl
+*.geojson
+*.3dmbak

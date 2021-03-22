@@ -1,0 +1,361 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="iconForAll" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\iconForAll.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="MetaData" xml:space="preserve">
+    <value>&lt;?xml version="1.0" encoding="utf-8" ?&gt;
+&lt;components&gt;
+  &lt;module name="Urban_Sustainability"&gt;
+    &lt;!-- 从类读取，多种计算 --&gt;
+    &lt;component&gt;
+      &lt;id&gt;Urban_Sustainability&lt;/id&gt;
+      &lt;name&gt;Urban_Sustainability&lt;/name&gt;
+      &lt;nickname&gt;U_Sustain&lt;/nickname&gt;
+      &lt;description&gt;index calculation, included EC,WC, GC value&lt;/description&gt;
+      &lt;category&gt;UrbanX&lt;/category&gt;
+      &lt;subCategory&gt;Urban_Sustainability&lt;/subCategory&gt;
+      &lt;inputs&gt;
+        &lt;input id="0" name="siteParameter" nickname="siteP" description="Parameter for index calculation"/&gt;
+      &lt;/inputs&gt;
+      &lt;outputs&gt;
+        &lt;output id="0"  name="outputEnergyConsumption" nickname="oEC" description="result EC from site parameter, reuslt=[min,max], unit=kw"/&gt;
+        &lt;output id="1"  name="outputWaterConsumption" nickname="oWC" description="result WC from site parameter, reuslt=[min,max], unit=T"/&gt;
+        &lt;output id="2"  name="outputGarbageConsumption" nickname="oGC" description="result GC from site parameter, reuslt=[min,max], unit=kg"/&gt;
+      &lt;/outputs&gt;
+    &lt;/component&gt;
+    
+    &lt;!-- 从类读取，能源消耗量计算 --&gt;
+    &lt;component&gt;
+      &lt;id&gt;Urban_Sustainability_Energy&lt;/id&gt;
+      &lt;name&gt;Urban_Sustainability_Energy&lt;/name&gt;
+      &lt;nickname&gt;U_Sustain_EC&lt;/nickname&gt;
+      &lt;description&gt;index calculation, included energy consumption&lt;/description&gt;
+      &lt;category&gt;UrbanX&lt;/category&gt;
+      &lt;subCategory&gt;Urban_Sustainability&lt;/subCategory&gt;
+      &lt;inputs&gt;
+        &lt;input id="0" name="siteParameter" nickname="siteP" description="Parameter for index calculation"/&gt;
+      &lt;/inputs&gt;
+      &lt;outputs&gt;
+        &lt;output id="0"  name="outputEnergyConsumption" nickname="oEC" description="result EC from site parameter, reuslt=[min,max], unit=kw"/&gt;
+      &lt;/outputs&gt;
+    &lt;/component&gt;
+    
+    &lt;!-- 从类读取，水资源消耗量计算--&gt;
+    &lt;component&gt;
+      &lt;id&gt;Urban_Sustainability_Water&lt;/id&gt;
+      &lt;name&gt;Urban_Sustainability_Water&lt;/name&gt;
+      &lt;nickname&gt;U_Sustain_WC&lt;/nickname&gt;
+      &lt;description&gt;index calculation, included water consumption&lt;/description&gt;
+      &lt;category&gt;UrbanX&lt;/category&gt;
+      &lt;subCategory&gt;Urban_Sustainability&lt;/subCategory&gt;
+      &lt;inputs&gt;
+        &lt;input id="0" name="siteParameter" nickname="siteP" description="Parameter for index calculation"/&gt;
+      &lt;/inputs&gt;
+      &lt;outputs&gt;
+        &lt;output id="0"  name="outputWaterConsumption" nickname="oWC" description="result WC from site parameter, reuslt=[min,max], unit=T"/&gt;
+      &lt;/outputs&gt;
+    &lt;/component&gt;
+
+    &lt;!-- 从类读取，固废资源产生量计算--&gt;
+    &lt;component&gt;
+      &lt;id&gt;Urban_Sustainability_Garbage&lt;/id&gt;
+      &lt;name&gt;Urban_Sustainability_Garbage&lt;/name&gt;
+      &lt;nickname&gt;U_Sustain_GC&lt;/nickname&gt;
+      &lt;description&gt;index calculation, included garbage consumption&lt;/description&gt;
+      &lt;category&gt;UrbanX&lt;/category&gt;
+      &lt;subCategory&gt;Urban_Sustainability&lt;/subCategory&gt;
+      &lt;inputs&gt;
+        &lt;input id="0" name="siteParameter" nickname="siteP" description="Parameter for index calculation"/&gt;
+      &lt;/inputs&gt;
+      &lt;outputs&gt;
+        &lt;output id="0"  name="outputGarbageConsumption" nickname="oGC" description="result GC from site parameter, reuslt=[min,max], unit=kg"/&gt;&lt;output id="0"  name="outputGarbageConsumption" nickname="oGC" description="result GC from site parameter, reuslt=[min,max], unit=kg"/&gt;
+      &lt;/outputs&gt;
+    &lt;/component&gt;
+
+    &lt;!-- 从现有数据读取，多种计算--&gt;
+    &lt;component&gt;
+      &lt;id&gt;Urban_Sustainability_Custom&lt;/id&gt;
+      &lt;name&gt;Urban_Sustainability_Custom&lt;/name&gt;
+      &lt;nickname&gt;U_Sustain_C&lt;/nickname&gt;
+      &lt;description&gt;index calculation, included EC,WC, GC value based on input objects&lt;/description&gt;
+      &lt;category&gt;UrbanX&lt;/category&gt;
+      &lt;subCategory&gt;Urban_Sustainability&lt;/subCategory&gt;
+      &lt;inputs&gt;
+        &lt;input id="0" name="inputBreps" nickname="inBrep" description="input breps to calculate index value"/&gt;
+        &lt;input id="1" name="inputFunctions" nickname="inFun" description="input functions of each brep, R,C,H,O,GIC,M,W,S"/&gt;
+      &lt;/inputs&gt;
+      &lt;outputs&gt;
+        &lt;output id="0"  name="outputEnergyConsumption" nickname="oEC" description="result EC from site parameter, reuslt=[min,max], unit=kw"/&gt;
+        &lt;output id="1"  name="outputWaterConsumption" nickname="oWC" description="result WC from site parameter, reuslt=[min,max], unit=T"/&gt;
+        &lt;output id="2"  name="outputGarbageConsumption" nickname="oGC" description="result GC from site parameter, reuslt=[min,max], unit=kg"/&gt;
+      &lt;/outputs&gt;
+    &lt;/component&gt;
+
+    &lt;!-- 从现有数据读取，能源消耗量计算--&gt;
+    &lt;component&gt;
+      &lt;id&gt;Urban_Sustainability_Custom_Energy&lt;/id&gt;
+      &lt;name&gt;Urban_Sustainability_Custom_Energy&lt;/name&gt;
+      &lt;nickname&gt;U_Sustain_C_E&lt;/nickname&gt;
+      &lt;description&gt;index calculation, included energy consumption based on input objects&lt;/description&gt;
+      &lt;category&gt;UrbanX&lt;/category&gt;
+      &lt;subCategory&gt;Urban_Sustainability&lt;/subCategory&gt;
+      &lt;inputs&gt;
+        &lt;input id="0" name="inputBreps" nickname="inBrep" description="input breps to calculate index value"/&gt;
+        &lt;input id="1" name="inputFunctions" nickname="inFun" description="input functions of each brep, R,C,H,O,GIC,M,W,S"/&gt;
+      &lt;/inputs&gt;
+      &lt;outputs&gt;
+        &lt;output id="0"  name="outputEnergyConsumption" nickname="oEC" description="result EC from site parameter, reuslt=[min,max], unit=kw"/&gt;
+      &lt;/outputs&gt;
+    &lt;/component&gt;
+    
+    &lt;!-- 从现有数据读取，水资源消耗量计算--&gt;
+    &lt;component&gt;
+      &lt;id&gt;Urban_Sustainability_Custom_Water&lt;/id&gt;
+      &lt;name&gt;Urban_Sustainability_Custom_Water&lt;/name&gt;
+      &lt;nickname&gt;U_Sustain_C_W&lt;/nickname&gt;
+      &lt;description&gt;index calculation, included water consumption based on input objects&lt;/description&gt;
+      &lt;category&gt;UrbanX&lt;/category&gt;
+      &lt;subCategory&gt;Urban_Sustainability&lt;/subCategory&gt;
+      &lt;inputs&gt;
+        &lt;input id="0" name="inputBreps" nickname="inBrep" description="input breps to calculate index value"/&gt;
+        &lt;input id="1" name="inputFunctions" nickname="inFun" description="input functions of each brep, R,C,H,O,GIC,M,W,S"/&gt;
+      &lt;/inputs&gt;
+      &lt;outputs&gt;
+        &lt;output id="0"  name="outputWaterConsumption" nickname="oWC" description="result WC from site parameter, reuslt=[min,max], unit=T"/&gt;
+      &lt;/outputs&gt;
+    &lt;/component&gt;
+
+    &lt;!-- 从现有数据读取，固废资源产生量计算--&gt;
+    &lt;component&gt;
+      &lt;id&gt;Urban_Sustainability_Custom_Garbage&lt;/id&gt;
+      &lt;name&gt;Urban_Sustainability_Custom_Garbage&lt;/name&gt;
+      &lt;nickname&gt;U_Sustain_C_G&lt;/nickname&gt;
+      &lt;description&gt;index calculation, included garbage consumption based on input objects&lt;/description&gt;
+      &lt;category&gt;UrbanX&lt;/category&gt;
+      &lt;subCategory&gt;Urban_Sustainability&lt;/subCategory&gt;
+      &lt;inputs&gt;
+        &lt;input id="0" name="inputBreps" nickname="inBrep" description="input breps to calculate index value"/&gt;
+        &lt;input id="1" name="inputFunctions" nickname="inFun" description="input functions of each brep, R,C,H,O,GIC,M,W,S"/&gt;
+      &lt;/inputs&gt;
+      &lt;outputs&gt;
+        &lt;output id="0"  name="outputGarbageConsumption" nickname="oGC" description="result GC from site parameter, reuslt=[min,max], unit=kg"/&gt;
+      &lt;/outputs&gt;
+    &lt;/component&gt;
+    
+      &lt;!-- 从现有数据读取，建筑曝光率计算--&gt;
+    &lt;component&gt;
+      &lt;id&gt;Urban_Sustainability_ExposureRate&lt;/id&gt;
+      &lt;name&gt;Urban_Sustainability_ExposureRate&lt;/name&gt;
+      &lt;nickname&gt;U_Sustain_ER&lt;/nickname&gt;
+      &lt;description&gt;calculate exposure rate of each side in builidng brep&lt;/description&gt;
+      &lt;category&gt;UrbanX&lt;/category&gt;
+      &lt;subCategory&gt;Urban_Sustainability&lt;/subCategory&gt;
+      &lt;inputs&gt;
+        &lt;input id="0" name="inputBreps" nickname="inBrep" description="input brep list to calculate exposure rate value"/&gt;
+        &lt;input id="1" name="inputPts" nickname="inPts" description="input point list to create rays"/&gt;
+        &lt;input id="2" name="nomalized" nickname="N" description="normalized the exposure rate value"/&gt;
+        &lt;input id="3" name="radius" nickname="R" description="the radius of rays"/&gt;
+        &lt;input id="4" name="segments" nickname="S" description="the segments of rays"/&gt;
+      &lt;/inputs&gt;
+      &lt;outputs&gt;
+        &lt;output id="0"  name="outputLines" nickname="L" description="brep outlines in first level"/&gt;
+        &lt;output id="1"  name="outputExposureRates" nickname="ER" description="value for each brep outlines"/&gt;
+      &lt;/outputs&gt;
+    &lt;/component&gt;
+
+            &lt;!-- 从现有数据读取，计算人口数据--&gt;
+    &lt;component&gt;
+      &lt;id&gt;Urban_Sustainability_CalculatePopulation&lt;/id&gt;
+      &lt;name&gt;Urban_Sustainability_CalculatePopulation&lt;/name&gt;
+      &lt;nickname&gt;U_Sustain_CP&lt;/nickname&gt;
+      &lt;description&gt;calculate population in each residential building&lt;/description&gt;
+      &lt;category&gt;UrbanX&lt;/category&gt;
+      &lt;subCategory&gt;Urban_Sustainability&lt;/subCategory&gt;
+      &lt;inputs&gt;
+        &lt;input id="0" name="inputBreps" nickname="inBrep" description="input brep list to calculate population"/&gt;
+      &lt;/inputs&gt;
+      &lt;outputs&gt;
+        &lt;output id="0"  name="outputPopulation" nickname="outP" description="population in each building"/&gt;
+      &lt;/outputs&gt;
+    &lt;/component&gt;
+
+  &lt;/module&gt;
+&lt;/components&gt;</value>
+  </data>
+  <data name="Space_CentralityScore" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Space_CentralityScore.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Space_ClearRoads" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Space_ClearRoads.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Space_Computing" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Space_Computing.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Space_ConstructGraph" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Space_ConstructGraph.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Urban_SiteGeneratePlans" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Urban_SiteGeneratePlans.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Urban_SiteParameter" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Urban_SiteParameter.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Urban_SiteParameterExtra" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Urban_SiteParameterExtra.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Urban_Sustainability" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Urban_Sustainability.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Urban_Sustainability_Custom" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Urban_Sustainability_Custom.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Urban_Sustainability_Custom_Energy" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Urban_Sustainability_Custom_Energy.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Urban_Sustainability_Custom_Garbage" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Urban_Sustainability_Custom_Garbage.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Urban_Sustainability_Custom_Water" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Urban_Sustainability_Custom_Water.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Urban_Sustainability_Energy" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Urban_Sustainability_Energy.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Urban_Sustainability_Exposure_Rate" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Urban_Sustainability_Exposure_Rate.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Urban_Sustainability_Garbage" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Urban_Sustainability_Garbage.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Urban_Sustainability_Water" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Urban_Sustainability_Water.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Water_CalculateSiteDemand" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Water_CalculateSiteDemand.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Water_InpFileToGeometry" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Water_InpFileToGeometry.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Water_NetworkOptimization" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Water_NetworkOptimization.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+</root>

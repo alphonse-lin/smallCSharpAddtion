@@ -1,0 +1,158 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{0308C779-71E3-41CB-886E-AD4799BBAE31}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>UrbanX</RootNamespace>
+    <AssemblyName>UrbanX</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+    <TargetFrameworkProfile />
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.Solver.Foundation, Version=3.0.2.10889, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Solver.Foundation.3.1.0\lib\Microsoft.Solver.Foundation.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="RhinoCommon">
+      <HintPath>C:\Program Files\Rhino 6\System\RhinoCommon.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Algorithms\Geometry\BentleyOttmann.cs" />
+    <Compile Include="Algorithms\Geometry\IntervalTree.cs" />
+    <Compile Include="Algorithms\Geometry\LineIntersection.cs" />
+    <Compile Include="Algorithms\Geometry\Voronoi.cs" />
+    <Compile Include="Algorithms\Graphs\CalculateCentrality.cs" />
+    <Compile Include="Algorithms\Graphs\CalculateCentralityRadius.cs" />
+    <Compile Include="Algorithms\Graphs\CalculateCentralitySubgraphs.cs" />
+    <Compile Include="Algorithms\Graphs\DijkstraShortestPaths.cs" />
+    <Compile Include="Algorithms\Mathematics\Parabola.cs" />
+    <Compile Include="Algorithms\Mathematics\RootFinding.cs" />
+    <Compile Include="Algorithms\Mathematics\SolveQuadratic.cs" />
+    <Compile Include="Algorithms\Utility\Extension.cs" />
+    <Compile Include="Algorithms\Utility\Statistics.cs" />
+    <Compile Include="DataStructures\Geometry\BasicGeometry.cs" />
+    <Compile Include="DataStructures\Geometry\BasicGeometry_Lin.cs" />
+    <Compile Include="DataStructures\Geometry\VoronoiBeachLine.cs" />
+    <Compile Include="DataStructures\Geometry\VoronoiElements.cs" />
+    <Compile Include="DataStructures\Geometry\VoronoiEvents.cs" />
+    <Compile Include="DataStructures\Geometry\VoronoiStructure.cs" />
+    <Compile Include="DataStructures\Graphs\DirectedSparseGraph.cs" />
+    <Compile Include="DataStructures\Graphs\DirectedWeightedSparseGraph.cs" />
+    <Compile Include="DataStructures\Graphs\IEdge.cs" />
+    <Compile Include="DataStructures\Graphs\IGraph.cs" />
+    <Compile Include="DataStructures\Graphs\IWeightedGraph.cs" />
+    <Compile Include="DataStructures\Graphs\UndirectedDenseGraph.cs" />
+    <Compile Include="DataStructures\Graphs\UndirectedSparseGraph.cs" />
+    <Compile Include="DataStructures\Graphs\UndirectedWeightedSparseGraph.cs" />
+    <Compile Include="DataStructures\Graphs\UnweightedEdge.cs" />
+    <Compile Include="DataStructures\Graphs\WeightedEdge.cs" />
+    <Compile Include="DataStructures\Heaps\BinaryMaxHeap.cs" />
+    <Compile Include="DataStructures\Heaps\BinaryMinHeap.cs" />
+    <Compile Include="DataStructures\Heaps\IMaxHeap.cs" />
+    <Compile Include="DataStructures\Heaps\IMinHeap.cs" />
+    <Compile Include="DataStructures\Heaps\MaxPriorityQueue.cs" />
+    <Compile Include="DataStructures\Heaps\MinPriorityQueue.cs" />
+    <Compile Include="DataStructures\Heaps\PriorityQueueNode.cs" />
+    <Compile Include="DataStructures\Trees\BinarySearchTree.cs" />
+    <Compile Include="DataStructures\Trees\BinarySearchTreeNode.cs" />
+    <Compile Include="DataStructures\Trees\BSPTree.cs" />
+    <Compile Include="DataStructures\Trees\IBinarySearchTree.cs" />
+    <Compile Include="DataStructures\Trees\ITreeNode.cs" />
+    <Compile Include="DataStructures\Trees\RBTree.cs" />
+    <Compile Include="DataStructures\Trees\RBTreeNode.cs" />
+    <Compile Include="DataStructures\Utility\Comparers.cs" />
+    <Compile Include="DataStructures\Utility\TreeDrawer.cs" />
+    <Compile Include="ExternalEngines\Epanet\EpanetCSharp.cs" />
+    <Compile Include="Planning\IndexCalculation\IndexCalculation.cs" />
+    <Compile Include="Planning\IndexCalculation\InfoFromXML_BB.cs" />
+    <Compile Include="Planning\IndexCalculation\InfoXML_Population.cs" />
+    <Compile Include="Planning\SpaceSyntax\GraphCentrality.cs" />
+    <Compile Include="Planning\SpaceSyntax\GraphConstructor.cs" />
+    <Compile Include="Planning\SpaceSyntax\GraphPreparation.cs" />
+    <Compile Include="Planning\SpaceSyntax\GraphSpaceSyntaxComputing.cs" />
+    <Compile Include="Planning\ToJSON\ConvertJson.cs" />
+    <Compile Include="Planning\ToJSON\Convert_NoRhino.cs" />
+    <Compile Include="Planning\UrbanDesign\BuildingGeometry.cs" />
+    <Compile Include="Planning\UrbanDesign\BuildingParameters.cs" />
+    <Compile Include="Planning\UrbanDesign\BuildingType.cs" />
+    <Compile Include="Planning\UrbanDesign\DesignCalculator.cs" />
+    <Compile Include="Planning\UrbanDesign\DesignDatabase.cs" />
+    <Compile Include="Planning\UrbanDesign\DesignNonResidential.cs" />
+    <Compile Include="Planning\UrbanDesign\DesignResidential.cs" />
+    <Compile Include="Planning\UrbanDesign\DesignResult.cs" />
+    <Compile Include="Planning\UrbanDesign\DesignToolbox.cs" />
+    <Compile Include="Planning\UrbanDesign\DesignUtilities.cs" />
+    <Compile Include="Planning\UrbanDesign\SiteBoundingRect.cs" />
+    <Compile Include="Planning\UrbanDesign\SiteParameters.cs" />
+    <Compile Include="Planning\UrbanDesign\SunCalculator.cs" />
+    <Compile Include="Planning\Water\CaculateJunctionDemand.cs" />
+    <Compile Include="Planning\Water\NetworkOptimization.cs" />
+    <Compile Include="Planning\Water\ReadInpFile.cs" />
+    <Compile Include="Planning\Water\WaterNetComponents.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Data\UrbanDesign.xml" />
+    <Content Include="ExternalEngines\Epanet\epanet2.dll" />
+    <Content Include="Data\indexCalculation.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Algorithms\Trees\" />
+    <Folder Include="ExternalEngines\EnergyPlus\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
