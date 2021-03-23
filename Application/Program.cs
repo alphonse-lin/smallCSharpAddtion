@@ -756,8 +756,21 @@ namespace UrbanX.Application
             #region SketchUp测试
 
             #region 读取SU模型
-            var filePath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\exportFromRhino.skp";
-            var result = SketchUpManager.GetMeshFromSkp(filePath);
+            var jsonFilePath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\building_center01.geojson";
+            var exportPath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\building_center_2.skp";
+            var loadedPath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\loadedModel.skp";
+
+            var inputDataCollection = MeshCreation.ReadJsonData(jsonFilePath, "baseHeight", "brepHeight", out double[] heightCollection);
+            ToolManagers.TimeCalculation(start, "读取");
+
+            var result=SketchUpManager.ExtrudeSUModelFromData(inputDataCollection,heightCollection);
+            ToolManagers.TimeCalculation(start, "创建skp模型");
+
+            //var meshLoaded=SketchUpManager.LoadFromSkp(loadedPath);
+
+            SketchUpManager.WriteSUModel(result, exportPath,"2019");
+            ToolManagers.TimeCalculation(start, "存储skp模型");
+
             #endregion
             #endregion
 

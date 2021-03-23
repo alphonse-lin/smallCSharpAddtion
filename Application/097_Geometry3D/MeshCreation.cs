@@ -20,26 +20,28 @@ namespace UrbanX.Application.Geometry
     {
 
         #region 000_Basic Function
-        public static Vector3d[][] ReadJsonData(string jsonFilePath, string heightAttribute, out double[] heightCollection)
+        public static Vector3d[][] ReadJsonData(string jsonFilePath, string baseHeightAttribute, string heightAttribute, out double[] heightCollection)
         {
             StreamReader sr = File.OpenText(jsonFilePath);
             var feactureCollection = GeoJsonReader.GetFeatureCollectionFromJson(sr.ReadToEnd());
             Vector3d[][] vectorResult = new Vector3d[feactureCollection.Count][];
             double[] heightResult = new double[feactureCollection.Count];
-            
+
             for (int i = 0; i < feactureCollection.Count; i++)
             {
                 //读取数据
                 var jsonDic = feactureCollection[i].Geometry;
                 int geoCount = jsonDic.Coordinates.Length;
                 vectorResult[i] = new Vector3d[geoCount];
+                var jsonDic_baseHeight = feactureCollection[i].Attributes[baseHeightAttribute];
+                var baseHeightResult = double.Parse(jsonDic_baseHeight.ToString());
+                
                 for (int num = 0; num < jsonDic.Coordinates.Length; num++)
                 {
-                    vectorResult[i][num] = new Vector3d(jsonDic.Coordinates[num].X, jsonDic.Coordinates[num].Y, 0);
+                    vectorResult[i][num] = new Vector3d(jsonDic.Coordinates[num].X, jsonDic.Coordinates[num].Y, baseHeightResult);
                 }
-
-
                 var jsonDic_height = feactureCollection[i].Attributes[heightAttribute];
+                
                 heightResult[i] = double.Parse(jsonDic_height.ToString());
             }
 
