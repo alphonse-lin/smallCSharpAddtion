@@ -57,7 +57,7 @@ namespace UrbanX.Application.Geometry
             return skp.SaveAs(filepath, v, newfilepath);
         }
 
-        public static SketchUp ExtrudeSUModelFromData(Vector3d[][] polygonData, double[] height)
+        public static SketchUp ExtrudeSUModelFromData(Vector3d[][] polygonData, double[] height, double[][] envelopes)
         {
             SketchUp skp = new SketchUp();
             skp.Components = new Dictionary<string, Component>();
@@ -69,17 +69,37 @@ namespace UrbanX.Application.Geometry
             skp.Materials = new Dictionary<string, Material>();
             skp.Surfaces = new List<Surface>();
 
+            var savedLayer = new Layer("LayerTest");
+            skp.Layers.Add(savedLayer);
 
             var allgroup = new List<Group>(polygonData.Length);
             for (int i = 0; i < polygonData.Length; i++)
             {
+                Group group = new Group();
                 var edgeBtmList = GenerateBtmEdges(polygonData[i]);
                 var edgeWholeList = GenerateAllEdges(edgeBtmList, height[i]);
                 var srfWholeList = GenerateSurfaces(edgeBtmList, height[i]);
 
+                //group.Edges = edgeWholeList;
                 skp.Surfaces.AddRange(srfWholeList);
-                skp.Edges.AddRange(edgeWholeList);
+                //group.Curves = new List<Curve>();
+                //group.Groups = new List<Group>() { group };
+                //group.Instances = new List<Instance>();
+                //group.Surfaces = new List<Surface>();
+                //group.Edges = new List<Edge>();
+                //group.Transformation = new Transform();
+
+                //group.Name = i.ToString();
+                //group.Surfaces.AddRange(srfWholeList);
+                //group.Edges.AddRange(edgeWholeList);
+                //group.Transformation = new Transform(CreateTransformationData(envelopes[i][0], envelopes[i][1], height[i]));
+                ////group.Transformation = new Transform(CreateTransformationData(envelopes[i][2], envelopes[i][3], height[i]));
+                //group.Layer = "LayerTest";
+
+                //allgroup.Add(group);
+                ////skp.Edges.AddRange(edgeWholeList);
             }
+            skp.Groups = allgroup;
 
             return skp;
         }
@@ -110,7 +130,7 @@ namespace UrbanX.Application.Geometry
                 var ptE = ptList[i+1];
                 Vertex vertexE = new Vertex(ptE.x, ptE.y, ptE.z);
 
-                Edge edge = new Edge(vertexS, vertexE,"default");
+                Edge edge = new Edge(vertexS, vertexE,"LayerTest");
                 skp.Edges.Add(edge);
             }
         }
@@ -132,6 +152,7 @@ namespace UrbanX.Application.Geometry
             }
             srf_btm.OuterEdges = ExtractLoopFromPt(srf_btm.Vertices);
             srf_top.OuterEdges = ExtractLoopFromPt(srf_top.Vertices);
+            srf_btm.Normal = new Vector(0, 0, 1);
 
             for (int i = 0; i < srf_btm.Vertices.Count; i++)
             {
@@ -184,7 +205,7 @@ namespace UrbanX.Application.Geometry
                 var pt_2 = ptList[i + 1];
                 Vertex vertexE = new Vertex(pt_2.x, pt_2.y, pt_2.z);
 
-                Edge edge = new Edge(vertexS, vertexE, "default");
+                Edge edge = new Edge(vertexS, vertexE, "LayerTest");
                 edgeList.Add(edge);
             }
             return edgeList;
@@ -201,7 +222,7 @@ namespace UrbanX.Application.Geometry
                 edge_top.Add(new Edge(
                     new Vertex(edge_btm[i].Start.X, edge_btm[i].Start.Y, edge_btm[i].Start.Z+ height),
                     new Vertex(edge_btm[i].End.X, edge_btm[i].End.Y, edge_btm[i].Start.Z + height),
-                    "default"
+                    "LayerTest"
                     ));
             }
 
@@ -210,7 +231,7 @@ namespace UrbanX.Application.Geometry
                 Edge edge_side = new Edge(
                     new Vertex(edge_btm[i].Start.X, edge_btm[i].Start.Y, edge_btm[i].Start.Z), 
                     new Vertex(edge_top[i].Start.X, edge_top[i].Start.Y, edge_top[i].Start.Z),
-                    "default"
+                    "LayerTest"
                     );
                 edge_sides.Add(edge_side);
             }
@@ -242,11 +263,24 @@ namespace UrbanX.Application.Geometry
                 var pt_2 = ptList[i + 1];
                 Vertex vertexE = new Vertex(pt_2.X, pt_2.Y, pt_2.Z);
 
-                Edge edge = new Edge(vertexS, vertexE, "default");
+                Edge edge = new Edge(vertexS, vertexE, "LayerTest");
                 edgeList.Add(edge);
             }
             
             return new Loop(edgeList);
+        }
+
+        private static double[] CreateTransformationData(double x, double y,double z, double scale=1d)
+        {
+            double[] transData = new double[16];
+            transData = new double[]
+            {
+                1,0,0,0,
+                0,1,0,0,
+                0,0,1,0,
+                x,y,z,scale
+            };
+            return transData;
         }
     }
 }

@@ -756,14 +756,14 @@ namespace UrbanX.Application
             #region SketchUp测试
 
             #region 读取SU模型
-            var jsonFilePath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\building_center01.geojson";
+            var jsonFilePath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\building_center.geojson";
             var exportPath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\building_center_2.skp";
             var loadedPath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\loadedModel.skp";
 
-            var inputDataCollection = MeshCreation.ReadJsonData(jsonFilePath, "baseHeight", "brepHeight", out double[] heightCollection);
+            var inputDataCollection = MeshCreation.ReadJsonData(jsonFilePath, "baseHeight", "brepHeight", out double[] heightCollection, out double[][] envelopeCollection);
             ToolManagers.TimeCalculation(start, "读取");
 
-            var result=SketchUpManager.ExtrudeSUModelFromData(inputDataCollection,heightCollection);
+            var result=SketchUpManager.ExtrudeSUModelFromData(inputDataCollection,heightCollection,envelopeCollection);
             ToolManagers.TimeCalculation(start, "创建skp模型");
 
             //var meshLoaded=SketchUpManager.LoadFromSkp(loadedPath);

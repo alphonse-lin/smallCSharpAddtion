@@ -49,6 +49,45 @@ namespace UrbanX.Application.Geometry
             return vectorResult;
         }
 
+        public static Vector3d[][] ReadJsonData(string jsonFilePath, string baseHeightAttribute, string heightAttribute, out double[] heightCollection, out double[][] envelopeCollection)
+        {
+            StreamReader sr = File.OpenText(jsonFilePath);
+            var feactureCollection = GeoJsonReader.GetFeatureCollectionFromJson(sr.ReadToEnd());
+            Vector3d[][] vectorResult = new Vector3d[feactureCollection.Count][];
+            double[] heightResult = new double[feactureCollection.Count];
+            double[][] envelopeList = new double[feactureCollection.Count][];
+
+            for (int i = 0; i < feactureCollection.Count; i++)
+            {
+                //读取数据
+                var jsonDic = feactureCollection[i].Geometry;
+                int geoCount = jsonDic.Coordinates.Length;
+
+                vectorResult[i] = new Vector3d[geoCount];
+                envelopeList[i] = new double[4] { 
+                    jsonDic.EnvelopeInternal.MinX, 
+                    jsonDic.EnvelopeInternal.MinY, 
+                    jsonDic.EnvelopeInternal.MaxX, 
+                    jsonDic.EnvelopeInternal.MaxY,
+                };
+                
+                var jsonDic_baseHeight = feactureCollection[i].Attributes[baseHeightAttribute];
+                var baseHeightResult = double.Parse(jsonDic_baseHeight.ToString());
+
+                for (int num = 0; num < jsonDic.Coordinates.Length; num++)
+                {
+                    vectorResult[i][num] = new Vector3d(jsonDic.Coordinates[num].X, jsonDic.Coordinates[num].Y, baseHeightResult);
+                }
+                var jsonDic_height = feactureCollection[i].Attributes[heightAttribute];
+
+                heightResult[i] = double.Parse(jsonDic_height.ToString());
+            }
+
+            heightCollection = heightResult;
+            envelopeCollection = envelopeList;
+            return vectorResult;
+        }
+
         public static Vector3d[][] ReadJsonData(string jsonFilePath)
         {
             StreamReader sr = File.OpenText(jsonFilePath);
