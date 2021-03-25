@@ -349,6 +349,8 @@ namespace SketchUpNET
 			SUEntitiesAddFaces(entities, Surfaces->Count, Surface::ListToSU(Surfaces));
 			SUEntitiesAddEdges(entities, Edges->Count, Edge::ListToSU(Edges));
 			SUEntitiesAddCurves(entities, Curves->Count, Curve::ListToSU(Curves));
+			SUEntitiesAddGroup(entities, Group::ListToSU(Groups));
+			//SUEntitiesAddLayer(entities, Layer::ListToSU(Groups));
 			
 			
 			SUModelSaveToFile(model, Utilities::ToString(filename));

@@ -756,9 +756,9 @@ namespace UrbanX.Application
             #region SketchUp测试
 
             #region 读取SU模型
-            var jsonFilePath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\building_center.geojson";
+            var jsonFilePath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\building_center02.geojson";
             var exportPath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\building_center_2.skp";
-            var loadedPath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\loadedModel.skp";
+            var loadedPath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\loadedModel_2.skp";
 
             var inputDataCollection = MeshCreation.ReadJsonData(jsonFilePath, "baseHeight", "brepHeight", out double[] heightCollection, out double[][] envelopeCollection);
             ToolManagers.TimeCalculation(start, "读取");
@@ -766,9 +766,9 @@ namespace UrbanX.Application
             var result=SketchUpManager.ExtrudeSUModelFromData(inputDataCollection,heightCollection,envelopeCollection);
             ToolManagers.TimeCalculation(start, "创建skp模型");
 
-            //var meshLoaded=SketchUpManager.LoadFromSkp(loadedPath);
+            var meshLoaded=SketchUpManager.LoadFromSkp(loadedPath);
 
-            SketchUpManager.WriteSUModel(result, exportPath,"2019");
+            SketchUpManager.WriteSUModel(result, exportPath,"2020");
             ToolManagers.TimeCalculation(start, "存储skp模型");
 
             #endregion

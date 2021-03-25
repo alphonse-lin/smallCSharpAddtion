@@ -61,6 +61,31 @@ namespace SketchUpNET
 			return v;
 		};
 
+		//SULayerRef ToSU()
+		//{
+		//	SULayerRef layer = SU_INVALID;
+
+		//	SULayerRef* layer = (SUGroupRef*)malloc(*&size * sizeof(SUGroupRef));
+
+		//	for (int i = 0; i < size; i++)
+		//	{
+		//		groups[i] = this->Groups[i]->ToSU();
+		//	}
+		//	SUGroupCreate(&group);
+		//	return group;
+		//}
+
+		//static SUGroupRef* ListToSU(List<Group^>^ groups)
+		//{
+		//	size_t size = groups->Count;
+		//	SUGroupRef* result = (SUGroupRef*)malloc(*&size * sizeof(SUGroupRef));
+		//	for (int i = 0; i < size; i++)
+		//	{
+		//		result[i] = groups[i]->ToSU();
+		//	}
+		//	return result;
+		//}
+
 	};
 
 

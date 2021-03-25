@@ -438,8 +438,9 @@ SU_RESULT SUEntitiesAddGuideLines(SUEntitiesRef entities, size_t len,
 - \ref SU_ERROR_NONE on success
 - \ref SU_ERROR_INVALID_INPUT if entities or group is not a valid object
 */
-SU_RESULT SUEntitiesAddGroup(SUEntitiesRef entities, SUGroupRef group);
+SU_RESULT SUEntitiesAddGroup(SUEntitiesRef entities, const SUGroupRef* group);
 
+SU_RESULT SUEntitiesAddLayer(SUEntitiesRef entities, const SULayerRef* layer);
 /**
 @brief Adds an image object to an entities object.
 @param[in] entities The entities object.

@@ -1,0 +1,93 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        "SketchUpNET"
+    </assembly>
+    <members>
+        <member name="M:SketchUpNET.SketchUp.WriteNewModel(System.String)">
+            <summary>
+Write current SketchUp Model to a new SketchUp file.
+</summary>
+            <param name="filename">Path to .skp file</param>
+        </member>
+        <member name="M:SketchUpNET.SketchUp.AppendToModel(System.String)">
+            <summary>
+Append current SketchUp Model Data to an existing SketchUp file.
+</summary>
+            <param name="filename">Path to .skp file</param>
+        </member>
+        <member name="M:SketchUpNET.SketchUp.SaveAs(System.String,SketchUpNET.SKPVersion,System.String)">
+            <summary>
+Saves a SketchUp Model from filepath to a new file.
+Use this if you want to convert a SketchUp file to a different format.
+</summary>
+            <param name="filename">Path to original .skp file</param>
+            <param name="version">SketchUp Version to save the new file in</param>
+            <param name="newFilename">Path to new .skp file</param>
+        </member>
+        <member name="M:SketchUpNET.SketchUp.LoadModel(System.String,System.Boolean)">
+            <summary>
+Loads a SketchUp Model from filepath. Optionally load meshed geometries.
+</summary>
+            <param name="filename">Path to .skp file</param>
+            <param name="includeMeshes">Load model including meshed geometries</param>
+        </member>
+        <member name="M:SketchUpNET.SketchUp.LoadModel(System.String)">
+            <summary>
+Loads a SketchUp Model from filepath without loading Meshes.
+Use this if you don't need meshed geometries.
+</summary>
+            <param name="filename">Path to .skp file</param>
+        </member>
+        <member name="F:SketchUpNET.SketchUp.Edges">
+            <summary>
+Containing Model Edges (Lines)
+</summary>
+        </member>
+        <member name="F:SketchUpNET.SketchUp.Curves">
+            <summary>
+Containing Model Curves (Arcs)
+</summary>
+        </member>
+        <member name="F:SketchUpNET.SketchUp.Instances">
+            <summary>
+Containing Model Component Instances
+</summary>
+        </member>
+        <member name="F:SketchUpNET.SketchUp.Materials">
+            <summary>
+Containing Model Material Definitions
+</summary>
+        </member>
+        <member name="F:SketchUpNET.SketchUp.Components">
+            <summary>
+Containing Model Component Definitions
+</summary>
+        </member>
+        <member name="F:SketchUpNET.SketchUp.Groups">
+            <summary>
+Containing Model Groups
+</summary>
+        </member>
+        <member name="F:SketchUpNET.SketchUp.Layers">
+            <summary>
+Containing Model Layers
+</summary>
+        </member>
+        <member name="F:SketchUpNET.SketchUp.Surfaces">
+            <summary>
+Containing Model Surfaces
+</summary>
+        </member>
+        <member name="T:SketchUpNET.SketchUp">
+            <summary>
+SketchUp Base Class
+</summary>
+        </member>
+        <member name="F:SketchUpNET.Group.Surfaces">
+            <summary>
+Surfaces
+</summary>
+        </member>
+    </members>
+</doc>

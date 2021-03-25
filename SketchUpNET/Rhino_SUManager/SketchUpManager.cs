@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -15,14 +16,14 @@ namespace UrbanX.Application.Geometry
         public static SketchUp LoadFromSkp(string filePath)
         {
             SketchUp skp = new SketchUp();
-            skp.LoadModel(filePath);
+            skp.LoadModel(filePath,true);
             return skp;
         }
 
         public static string WriteSUModel(SketchUp skp, string filePath, string version = "2013")
         {
             var result = "Export Error";
-            if (version=="2020")
+            if (version == "2020")
             {
                 skp.WriteNewModel(filePath);
                 result = "export as SU2020";
@@ -57,7 +58,7 @@ namespace UrbanX.Application.Geometry
             return skp.SaveAs(filepath, v, newfilepath);
         }
 
-        public static SketchUp ExtrudeSUModelFromData(Vector3d[][] polygonData, double[] height, double[][] envelopes)
+        public static SketchUp ExtrudeSUModelFromData(Vector3d[][] polygonData, double[] height, double[][] envelopes, string layername="Layer")
         {
             SketchUp skp = new SketchUp();
             skp.Components = new Dictionary<string, Component>();
@@ -69,42 +70,43 @@ namespace UrbanX.Application.Geometry
             skp.Materials = new Dictionary<string, Material>();
             skp.Surfaces = new List<Surface>();
 
-            var savedLayer = new Layer("LayerTest");
-            skp.Layers.Add(savedLayer);
-
             var allgroup = new List<Group>(polygonData.Length);
             for (int i = 0; i < polygonData.Length; i++)
             {
+                layername = "Layer";
+                layername = string.Format($"{layername}_{i}");
+                var savedLayer = new Layer(layername);
+                skp.Layers.Add(savedLayer);
+
                 Group group = new Group();
-                var edgeBtmList = GenerateBtmEdges(polygonData[i]);
-                var edgeWholeList = GenerateAllEdges(edgeBtmList, height[i]);
-                var srfWholeList = GenerateSurfaces(edgeBtmList, height[i]);
+                var edgeBtmList = GenerateBtmEdges(polygonData[i], layername);
+                var edgeWholeList = GenerateAllEdges(edgeBtmList, height[i], layername);
+                var srfWholeList = GenerateSurfaces(edgeBtmList, height[i], layername);
 
-                //group.Edges = edgeWholeList;
-                skp.Surfaces.AddRange(srfWholeList);
-                //group.Curves = new List<Curve>();
-                //group.Groups = new List<Group>() { group };
-                //group.Instances = new List<Instance>();
-                //group.Surfaces = new List<Surface>();
-                //group.Edges = new List<Edge>();
-                //group.Transformation = new Transform();
 
-                //group.Name = i.ToString();
-                //group.Surfaces.AddRange(srfWholeList);
-                //group.Edges.AddRange(edgeWholeList);
-                //group.Transformation = new Transform(CreateTransformationData(envelopes[i][0], envelopes[i][1], height[i]));
-                ////group.Transformation = new Transform(CreateTransformationData(envelopes[i][2], envelopes[i][3], height[i]));
-                //group.Layer = "LayerTest";
+                //skp.Surfaces.AddRange(srfWholeList);
+                //skp.Edges.AddRange(edgeWholeList);
 
-                //allgroup.Add(group);
-                ////skp.Edges.AddRange(edgeWholeList);
+                group.Curves = new List<Curve>();
+                group.Groups = new List<Group>() { };
+                group.Instances = new List<Instance>();
+                group.Surfaces = new List<Surface>();
+                group.Edges = new List<Edge>();
+                group.Transformation = new Transform();
+
+                group.Name = i.ToString();
+                group.Surfaces.AddRange(srfWholeList);
+                group.Edges.AddRange(edgeWholeList);
+                group.Transformation = new Transform(CreateTransformationData(envelopes[i][2], envelopes[i][3], height[i]));
+                group.Layer = layername;
+
+                allgroup.Add(group);
             }
             skp.Groups = allgroup;
-
             return skp;
         }
 
-        public static void ExtrudeSUModelFromData(Vector3d[][] polygonData,double[] height,bool saveModel, string filePath)
+        public static void ExtrudeSUModelFromData(Vector3d[][] polygonData, double[] height, bool saveModel, string filePath, string layername)
         {
             SketchUp skp = new SketchUp();
             skp.Surfaces = new List<Surface>();
@@ -112,54 +114,60 @@ namespace UrbanX.Application.Geometry
 
             for (int i = 0; i < polygonData.Length; i++)
             {
-                var edgeBtmList=GenerateBtmEdges(polygonData[i]);
+                var edgeBtmList = GenerateBtmEdges(polygonData[i], layername);
                 //var edgeWholeList = GenerateAllEdges(edgeBtmList, height[i]);
-                var srfWholeList = GenerateSurfaces(edgeBtmList, height[i]);
+                var srfWholeList = GenerateSurfaces(edgeBtmList, height[i], layername);
 
                 skp.Surfaces.AddRange(srfWholeList);
                 //skp.Edges.AddRange(edgeWholeList);
             }
         }
 
-        private static void GenerateEdges(SketchUp skp,Vector3d[] ptList)
+        private static void GenerateEdges(SketchUp skp, Vector3d[] ptList, string layername)
         {
-            for (int i = 0; i <ptList.Length-1; i++)
+            for (int i = 0; i < ptList.Length - 1; i++)
             {
                 var ptS = ptList[i];
                 Vertex vertexS = new Vertex(ptS.x, ptS.y, ptS.z);
-                var ptE = ptList[i+1];
+                var ptE = ptList[i + 1];
                 Vertex vertexE = new Vertex(ptE.x, ptE.y, ptE.z);
 
-                Edge edge = new Edge(vertexS, vertexE,"LayerTest");
+                Edge edge = new Edge(vertexS, vertexE, layername);
                 skp.Edges.Add(edge);
             }
         }
 
-        private static List<Surface> GenerateSurfaces(List<Edge> edgeResult, double height)
+        private static List<Surface> GenerateSurfaces(List<Edge> edgeResult, double height, string layername)
         {
-            List<Surface> srfs = new List<Surface>(edgeResult.Count+2);
+            List<Surface> srfs = new List<Surface>(edgeResult.Count + 2);
             List<Surface> srf_sides = new List<Surface>(edgeResult.Count);
-            
-            Surface srf_btm = new Surface();
-            Surface srf_top = new Surface();
+
+            Surface srf_btm = new Surface() { InnerEdges = new List<Loop>(), BackMaterial = new Material(), FrontMaterial=new Material() ,Layer=layername};
+            Surface srf_top = new Surface() { InnerEdges = new List<Loop>(), BackMaterial = new Material(), FrontMaterial = new Material(), Layer = layername };
+
             srf_btm.Vertices = new List<Vertex>(edgeResult.Count);
             srf_top.Vertices = new List<Vertex>(edgeResult.Count);
 
             for (int i = 0; i < edgeResult.Count; i++)
             {
                 srf_btm.Vertices.Add(edgeResult[i].Start);
-                srf_top.Vertices.Add(new Vertex(edgeResult[i].Start.X, edgeResult[i].Start.Y, edgeResult[i].Start.Z+height));
+                srf_top.Vertices.Add(new Vertex(edgeResult[i].Start.X, edgeResult[i].Start.Y, edgeResult[i].Start.Z + height));
             }
-            srf_btm.OuterEdges = ExtractLoopFromPt(srf_btm.Vertices);
-            srf_top.OuterEdges = ExtractLoopFromPt(srf_top.Vertices);
-            srf_btm.Normal = new Vector(0, 0, 1);
+
+            List<Vertex> srf_btm_loop = (List<Vertex>)DeepCopyGenericType(srf_btm.Vertices);
+            List<Vertex> srf_top_loop = (List<Vertex>)DeepCopyGenericType(srf_top.Vertices);
+            srf_btm_loop.Add(srf_btm.Vertices[0]);
+            srf_top_loop.Add(srf_top.Vertices[0]);
+            srf_btm.OuterEdges = ExtractLoopFromPt(srf_btm_loop, layername);
+            srf_top.OuterEdges = ExtractLoopFromPt(srf_top_loop, layername);
+            //srf_btm.Normal = new Vector(0, 0, 1);
 
             for (int i = 0; i < srf_btm.Vertices.Count; i++)
             {
-                Surface srf_side = new Surface();
+                Surface srf_side = new Surface() { InnerEdges = new List<Loop>(), BackMaterial = new Material(), FrontMaterial = new Material(), Layer = layername };
                 srf_side.Vertices = new List<Vertex>(4);
                 List<Vertex> vertexList = new List<Vertex>(4);
-                if (i!= srf_btm.Vertices.Count-1)
+                if (i != srf_btm.Vertices.Count - 1)
                 {
                     vertexList = new List<Vertex>(4)
                     {
@@ -179,9 +187,11 @@ namespace UrbanX.Application.Geometry
                     srf_top.Vertices[i],
                     };
                 }
-                
-                srf_side.Vertices=vertexList;
-                srf_side.OuterEdges = ExtractLoopFromPt(srf_side.Vertices);
+
+                srf_side.Vertices = vertexList;
+                List<Vertex> srf_side_loop = (List<Vertex>)DeepCopyGenericType(srf_btm.Vertices);
+                srf_side_loop.Add(srf_side.Vertices[0]);
+                srf_side.OuterEdges = ExtractLoopFromPt(srf_side_loop, layername);
                 srf_sides.Add(srf_side);
             }
 
@@ -192,10 +202,10 @@ namespace UrbanX.Application.Geometry
             return srfs;
         }
 
-        private static List<Edge> GenerateBtmEdges(Vector3d[] ptList)
+        private static List<Edge> GenerateBtmEdges(Vector3d[] ptList, string layername)
         {
             List<Edge> edgeList = new List<Edge>(ptList.Length);
-            for (int i = 0; i < ptList.Length-1; i++)
+            for (int i = 0; i < ptList.Length - 1; i++)
             {
                 Surface srf_1 = new Surface();
                 srf_1.Vertices = new List<Vertex>();
@@ -205,33 +215,33 @@ namespace UrbanX.Application.Geometry
                 var pt_2 = ptList[i + 1];
                 Vertex vertexE = new Vertex(pt_2.x, pt_2.y, pt_2.z);
 
-                Edge edge = new Edge(vertexS, vertexE, "LayerTest");
+                Edge edge = new Edge(vertexS, vertexE, layername);
                 edgeList.Add(edge);
             }
             return edgeList;
         }
 
-        private static List<Edge> GenerateAllEdges(List<Edge> edge_btm,double height)
+        private static List<Edge> GenerateAllEdges(List<Edge> edge_btm, double height, string layername)
         {
-            List<Edge> edges = new List<Edge>(edge_btm.Count*3);
+            List<Edge> edges = new List<Edge>(edge_btm.Count * 3);
             List<Edge> edge_sides = new List<Edge>(edge_btm.Count);
             List<Edge> edge_top = new List<Edge>(edge_btm.Count);
 
             for (int i = 0; i < edge_btm.Count; i++)
             {
                 edge_top.Add(new Edge(
-                    new Vertex(edge_btm[i].Start.X, edge_btm[i].Start.Y, edge_btm[i].Start.Z+ height),
+                    new Vertex(edge_btm[i].Start.X, edge_btm[i].Start.Y, edge_btm[i].Start.Z + height),
                     new Vertex(edge_btm[i].End.X, edge_btm[i].End.Y, edge_btm[i].Start.Z + height),
-                    "LayerTest"
+                    layername
                     ));
             }
 
             for (int i = 0; i < edge_btm.Count; i++)
             {
                 Edge edge_side = new Edge(
-                    new Vertex(edge_btm[i].Start.X, edge_btm[i].Start.Y, edge_btm[i].Start.Z), 
+                    new Vertex(edge_btm[i].Start.X, edge_btm[i].Start.Y, edge_btm[i].Start.Z),
                     new Vertex(edge_top[i].Start.X, edge_top[i].Start.Y, edge_top[i].Start.Z),
-                    "LayerTest"
+                    layername
                     );
                 edge_sides.Add(edge_side);
             }
@@ -250,10 +260,10 @@ namespace UrbanX.Application.Geometry
             return srfNew;
         }
 
-        private static Loop ExtractLoopFromPt(List<Vertex> ptList)
+        private static Loop ExtractLoopFromPt(List<Vertex> ptList, string layername)
         {
             List<Edge> edgeList = new List<Edge>(ptList.Count);
-            for (int i = 0; i < ptList.Count- 1; i++)
+            for (int i = 0; i < ptList.Count - 1; i++)
             {
                 Surface srf_1 = new Surface();
                 srf_1.Vertices = new List<Vertex>();
@@ -263,14 +273,14 @@ namespace UrbanX.Application.Geometry
                 var pt_2 = ptList[i + 1];
                 Vertex vertexE = new Vertex(pt_2.X, pt_2.Y, pt_2.Z);
 
-                Edge edge = new Edge(vertexS, vertexE, "LayerTest");
+                Edge edge = new Edge(vertexS, vertexE, layername);
                 edgeList.Add(edge);
             }
-            
+
             return new Loop(edgeList);
         }
 
-        private static double[] CreateTransformationData(double x, double y,double z, double scale=1d)
+        private static double[] CreateTransformationData(double x, double y, double z, double scale = 1d)
         {
             double[] transData = new double[16];
             transData = new double[]
@@ -281,6 +291,134 @@ namespace UrbanX.Application.Geometry
                 x,y,z,scale
             };
             return transData;
+        }
+
+        private static object DeepCopyGenericType(object srcGeneric)
+        {
+            try
+            {
+                // Is List 
+                IList srcList = srcGeneric as IList;
+                if (srcList.Count <= 0)
+                {
+                    return null;
+                }
+
+                // Create new List<object> instance
+                IList dstList = Activator.CreateInstance(srcList.GetType()) as IList;
+                // deep copy each object in List
+                foreach (object o in srcList)
+                {
+                    dstList.Add(DeepCopy(o));
+                }
+
+                return dstList;
+            }
+            catch (Exception)
+            {
+                try
+                {
+                    IDictionary srcDictionary = srcGeneric as IDictionary;
+                    if (srcDictionary.Count <= 0)
+                    {
+                        return null;
+                    }
+
+                    // Create new map instance
+                    IDictionary dstDictionary = Activator.CreateInstance(srcDictionary.GetType()) as IDictionary;
+                    // deep copy each object in map
+                    foreach (object o in srcDictionary.Keys)
+                    {
+                        dstDictionary[o] = srcDictionary[o];
+                    }
+                    return dstDictionary;
+                }
+                catch (Exception)
+                {
+                    return null;
+                }
+            }
+        }
+
+        private static object DeepCopy(object srcobj)
+        {
+            if (srcobj == null)
+            {
+                return null;
+            }
+
+            Type srcObjType = srcobj.GetType();
+
+            // Is simple value type, directly assign
+            if (srcObjType.IsValueType)
+            {
+                return srcobj;
+            }
+            // Is array
+            if (srcObjType.IsArray)
+            {
+                return DeepCopyArray(srcobj as Array);
+            }
+            // is List or map
+            else if (srcObjType.IsGenericType)
+            {
+                return DeepCopyGenericType(srcobj);
+            }
+            // is cloneable
+            else if (srcobj is ICloneable)
+            {
+                // Log informations
+                return (srcobj as ICloneable).Clone();
+            }
+            else
+            {
+                // Try to do deep copy, create a new copied instance
+                object deepCopiedObj = System.Activator.CreateInstance(srcObjType);
+
+                // Find out all fields or properties, do deep copy
+                BindingFlags bflags = BindingFlags.DeclaredOnly | BindingFlags.Public
+                | BindingFlags.NonPublic | BindingFlags.Instance;
+                MemberInfo[] memberCollection = srcObjType.GetMembers(bflags);
+
+                foreach (MemberInfo member in memberCollection)
+                {
+                    if (member.MemberType == MemberTypes.Field)
+                    {
+                        FieldInfo field = (FieldInfo)member;
+                        object fieldValue = field.GetValue(srcobj);
+                        field.SetValue(deepCopiedObj, DeepCopy(fieldValue));
+                    }
+                    else if (member.MemberType == MemberTypes.Property)
+                    {
+                        PropertyInfo property = (PropertyInfo)member;
+                        MethodInfo info = property.GetSetMethod(false);
+                        if (info != null)
+                        {
+                            object propertyValue = property.GetValue(srcobj, null);
+                            property.SetValue(deepCopiedObj, DeepCopy(propertyValue), null);
+                        }
+                    }
+                }
+
+                return deepCopiedObj;
+            }
+        }
+
+        private static Array DeepCopyArray(Array srcArray)
+        {
+            if (srcArray.Length <= 0)
+            {
+                return null;
+            }
+            // Create new array instance based on source array
+            Array arrayCopied = Array.CreateInstance(srcArray.GetValue(0).GetType(), srcArray.Length);
+            // deep copy each object in array
+            for (int i = 0; i < srcArray.Length; i++)
+            {
+                object o = DeepCopy(srcArray.GetValue(i));
+                arrayCopied.SetValue(o, i);
+            }
+            return arrayCopied;
         }
     }
 }
