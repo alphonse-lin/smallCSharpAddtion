@@ -756,22 +756,29 @@ namespace UrbanX.Application
             #region SketchUp测试
 
             #region 读取SU模型
-            var jsonFilePath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\building_center02.geojson";
-            var exportPath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\building_center_2.skp";
-            var loadedPath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\loadedModel_2.skp";
+            //var jsonFilePath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\building_center02.geojson";
+            //var exportPath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\building_center_2_2013.skp";
+            //var loadedPath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\loadedModel_2.skp";
 
-            var inputDataCollection = MeshCreation.ReadJsonData(jsonFilePath, "baseHeight", "brepHeight", out double[] heightCollection, out double[][] envelopeCollection);
-            ToolManagers.TimeCalculation(start, "读取");
+            //var inputDataCollection = MeshCreation.ReadJsonData(jsonFilePath, "baseHeight", "brepHeight", out double[] heightCollection, out double[][] envelopeCollection);
+            //ToolManagers.TimeCalculation(start, "读取");
 
-            var result=SketchUpManager.ExtrudeSUModelFromData(inputDataCollection,heightCollection,envelopeCollection);
-            ToolManagers.TimeCalculation(start, "创建skp模型");
+            //var result=SketchUpManager.ExtrudeSUModelFromData(inputDataCollection,heightCollection,envelopeCollection);
+            //ToolManagers.TimeCalculation(start, "创建skp模型");
 
-            var meshLoaded=SketchUpManager.LoadFromSkp(loadedPath);
+            //var meshLoaded=SketchUpManager.LoadFromSkp(loadedPath);
 
-            SketchUpManager.WriteSUModel(result, exportPath,"2020");
-            ToolManagers.TimeCalculation(start, "存储skp模型");
+            ////SketchUpManager.WriteSUModel(result, exportPath,"2020");
+            //SketchUpManager.AppendToSUModel(result, exportPath,"2013");
+            //ToolManagers.TimeCalculation(start, "存储skp模型");
 
             #endregion
+            #endregion
+
+            #region 003_日照计算
+            var test = new SunCalculator(-33.95, 10, 151.18,2018,12,23,12,0,10);
+            Console.WriteLine($"{test.SunDistance}");
+
             #endregion
 
 

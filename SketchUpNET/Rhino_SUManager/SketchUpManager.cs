@@ -40,6 +40,26 @@ namespace UrbanX.Application.Geometry
             return result;
         }
 
+        public static string AppendToSUModel(SketchUp skp, string fileOriginalPath, string version = "2013")
+        {
+            
+            var result = "Export Error";
+            if (version == "2020")
+            {
+                skp.AppendToModel(fileOriginalPath);
+                result = "export as SU2020";
+            }
+            else
+            {
+                skp.AppendToModel(fileOriginalPath);
+                string filePath = fileOriginalPath.Substring(0, fileOriginalPath.Length - 4)+$"_{version}.skp";
+
+                ReformatModel(fileOriginalPath, filePath, version);
+                result = $"export as {version}";
+            }
+            return result;
+        }
+
         public static bool ReformatModel(string filepath, string newfilepath, string version)
         {
             SketchUpNET.SketchUp skp = new SketchUpNET.SketchUp();
@@ -70,7 +90,7 @@ namespace UrbanX.Application.Geometry
             skp.Materials = new Dictionary<string, Material>();
             skp.Surfaces = new List<Surface>();
 
-            var allgroup = new List<Group>(polygonData.Length);
+            //var allgroup = new List<Group>(polygonData.Length);
             for (int i = 0; i < polygonData.Length; i++)
             {
                 layername = "Layer";
@@ -84,25 +104,25 @@ namespace UrbanX.Application.Geometry
                 var srfWholeList = GenerateSurfaces(edgeBtmList, height[i], layername);
 
 
-                //skp.Surfaces.AddRange(srfWholeList);
-                //skp.Edges.AddRange(edgeWholeList);
+                skp.Surfaces.AddRange(srfWholeList);
+                skp.Edges.AddRange(edgeWholeList);
 
-                group.Curves = new List<Curve>();
-                group.Groups = new List<Group>() { };
-                group.Instances = new List<Instance>();
-                group.Surfaces = new List<Surface>();
-                group.Edges = new List<Edge>();
-                group.Transformation = new Transform();
+                //group.Curves = new List<Curve>();
+                //group.Groups = new List<Group>() { };
+                //group.Instances = new List<Instance>();
+                //group.Surfaces = new List<Surface>();
+                //group.Edges = new List<Edge>();
+                //group.Transformation = new Transform();
 
-                group.Name = i.ToString();
-                group.Surfaces.AddRange(srfWholeList);
-                group.Edges.AddRange(edgeWholeList);
-                group.Transformation = new Transform(CreateTransformationData(envelopes[i][2], envelopes[i][3], height[i]));
-                group.Layer = layername;
+                //group.Name = i.ToString();
+                //group.Surfaces.AddRange(srfWholeList);
+                //group.Edges.AddRange(edgeWholeList);
+                //group.Transformation = new Transform(CreateTransformationData(envelopes[i][2], envelopes[i][3], height[i]));
+                //group.Layer = layername;
 
-                allgroup.Add(group);
+                //allgroup.Add(group);
             }
-            skp.Groups = allgroup;
+            //skp.Groups = allgroup;
             return skp;
         }
 
