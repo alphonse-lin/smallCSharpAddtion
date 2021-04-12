@@ -11,6 +11,7 @@ using System.Xml.Linq;
 using CsvHelper;
 using Npgsql;
 using System.Globalization;
+using System.Threading.Tasks;
 
 using UrbanX.Application.Office;
 using UrbanX.Application.Geometry;
@@ -470,13 +471,12 @@ namespace UrbanX.Application
             #endregion
 
             #region 计算行道树CO2吸收量
-            //DateTime start = System.DateTime.Now;
-            //string connectionString = "Host=39.107.177.223;Username=postgres;Password=admin;Database=urbanxlab_db";
-            //string treeName = "毛白杨";
-            //var DBH = new List<double>() { 6d,12d };
+            string connectionString = "Host=39.107.177.223;Username=postgres;Password=admin;Database=urbanxlab_db";
+            string treeName = "毛白杨";
+            var DBH = new List<double>() { 6d, 12d };
 
-            //var calc = new TreeCO2_calculation(connectionString, treeName, DBH);
-            //Console.WriteLine("树木体积为{0}m³, Biomass为{2}kg, 总吸收二氧化碳量为{2}kg", calc.totalVolume, calc.totalDWB, calc.totalCO2);
+            var calc = new TreeCO2_calculation(connectionString, treeName, DBH);
+            Console.WriteLine("树木体积为{0}m³, Biomass为{2}kg, 总吸收二氧化碳量为{2}kg", calc.totalVolume, calc.totalDWB, calc.totalCO2);
             #endregion
 
             #region 测试自动生成ppt
@@ -610,6 +610,7 @@ namespace UrbanX.Application
             //Console.ReadLine();
             #endregion
             #endregion
+
 
             #region 三维计算
             #region 000_练习
@@ -753,7 +754,7 @@ namespace UrbanX.Application
 
             #endregion
 
-            #region SketchUp测试
+            #region 003_SketchUp测试
 
             #region 读取SU模型
             //var jsonFilePath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\building_center02.geojson";
@@ -775,13 +776,11 @@ namespace UrbanX.Application
             #endregion
             #endregion
 
-            #region 003_日照计算
-            var test = new SunCalculator(-33.95, 10, 151.18,2018,12,23,12,0,10);
-            Console.WriteLine($"{test.SunDistance}");
+            #region 004_日照计算
+            //var test = new SunCalculator(39.904030, 116.407526, 10, 2018,12,23,12,0,8);
+            //Console.WriteLine($"{test.SunDistance}");
 
             #endregion
-
-
             #endregion
             ToolManagers.TimeCalculation(start, "完成");
             Console.ReadLine();

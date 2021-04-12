@@ -11,7 +11,7 @@ using Rhino.Geometry;
 
 using UrbanX.Planning.IndexCalc;
 using UrbanX.Planning.UrbanDesign;
-
+using UrbanX_GH.Application.Geometry;
 using UrbanX_GH.Properties;
 
 
@@ -22,7 +22,7 @@ using UrbanX_GH.Properties;
 
 namespace UrbanX_GH
 {
-    public class CreateMeshComponent : GH_Component
+    public class UrbanX_Sustainability_MeshSub_Component : GH_Component
     {
         /// <summary>
         /// Each implementation of GH_Component must provide a public 
@@ -32,7 +32,7 @@ namespace UrbanX_GH
         /// new tabs/panels will automatically be created.
         /// </summary>
         public XElement meta;
-        public static string c_id = "Urban_Sustainability_Energy";
+        public static string c_id = "Urban_Sustainability_ExposureRate3D";
         public static string c_moduleName = "Urban_Sustainability";
 
         #region 备用
@@ -44,8 +44,9 @@ namespace UrbanX_GH
         //}
         #endregion
         public override GH_Exposure Exposure => GH_Exposure.primary;
-        public CreateMeshComponent() : base("", "", "", "", "")
+        public UrbanX_Sustainability_MeshSub_Component() : base("", "", "", "", "")
         {
+            //ToDo 完善这部分内容
             //AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler(SharedUtils.Resolve);
             this.meta = SharedResources_Utils.GetXML(c_moduleName, c_id);
             this.Name = this.meta.Element("name").Value;
@@ -61,8 +62,10 @@ namespace UrbanX_GH
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
+            //ToDo 完善这部分内容
             this.meta = SharedResources_Utils.GetXML(c_moduleName, c_id);
             List<XElement> list = this.meta.Element("inputs").Elements("input").ToList<XElement>();
+            pManager.AddGenericParameter((string)list[0].Attribute("name"), (string)list[0].Attribute("nickname"), (string)list[0].Attribute("description"), GH_ParamAccess.item);
             pManager.AddGenericParameter((string)list[0].Attribute("name"), (string)list[0].Attribute("nickname"), (string)list[0].Attribute("description"), GH_ParamAccess.item);
         }
 
@@ -71,9 +74,10 @@ namespace UrbanX_GH
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
+            //ToDo 完善这部分内容
             this.meta = SharedResources_Utils.GetXML(c_moduleName, c_id);
             List<XElement> list = this.meta.Element("outputs").Elements("output").ToList<XElement>();
-            pManager.AddGenericParameter((string)list[0].Attribute("name"), (string)list[0].Attribute("nickname"), (string)list[0].Attribute("description"), GH_ParamAccess.tree);
+            pManager.AddGenericParameter((string)list[0].Attribute("name"), (string)list[0].Attribute("nickname"), (string)list[0].Attribute("description"), GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -83,54 +87,38 @@ namespace UrbanX_GH
         /// to store data in output parameters.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            //var xmlPath = @"D:\实验室\010_CAAD\002_插件\UrbanXFireFly\IndexCalc\bin\indexCalculation.xml";
-            var defaultPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            string dataDirectory = Path.Combine(defaultPath, "data");
-            string xmlPath = Path.Combine(dataDirectory, "indexCalculation.xml");
+            Brep[] brepIn = null;
+            double gridSize = 10;
+            if (!DA.GetData(0, ref brepIn)) { return; }
+            if (!DA.GetData(1, ref gridSize)) { return; }
 
-            DesignResult[] siteResults = null;
-            if (!DA.GetData(0, ref siteResults)) { return; }
+            #region 细分mesh
 
-            var indexCalc = new IndexCalculation(xmlPath);
-
-            #region 层级数据输入
-            //Block层
-            //DataTree<Brep> outputBrep = new DataTree<Brep>();
-            DataTree<int> outputEC = new DataTree<int>();
-
-            for (int blockID = 0; blockID < siteResults.Length; blockID++)
+            var test = new List<Mesh[]>(brepIn.Length); ;
+            System.Threading.Tasks.Parallel.For(0, brepIn.Length, i =>
             {
-                var siteResult = siteResults[blockID];
+                var singleBrep = MeshCreation.CreateBrepMinusTopBtn(brepIn[i]);
 
-                //Subsite层
-                for (int subSiteID = 0; subSiteID < siteResult.SubSites.Length; subSiteID++)
-                {
-                    //Building层
-                    for (int buildingID = 0; buildingID < siteResults[blockID].SubSiteBuildingGeometries[subSiteID].Length; buildingID++)
-                    {
-                        var building = siteResults[blockID].SubSiteBuildingGeometries[subSiteID][buildingID];
-                        //Brep层
-                        for (int brepID = 0; brepID < building.BrepOutlines.Length; brepID++)
-                        {
-                            //Brep=数值归位
-                            var tempECBuilding = indexCalc.EnergyConsumption_Building(building.BrepFunctions[brepID], building.BrepAreas[brepID]);
+                var mp = MeshingParameters.Default;
+                mp.MaximumEdgeLength = gridSize;
+                mp.MinimumEdgeLength = gridSize;
+                mp.GridAspectRatio = 1;
 
-                            //传入GH Tree 
-                            GH_Path ghPath = new GH_Path(blockID, subSiteID, buildingID, brepID);
+                test.Add(Mesh.CreateFromBrep(brepIn[i], mp));
+            });
 
-                            //outputBrep.Add(building.Breps[brepID], ghPath);
-                            for (int i = 0; i < 2; i++)
-                            {
-                                outputEC.Add(tempECBuilding[i], ghPath);
-                            }
-                        }
-                    }
-                }
+            var brep_mesh = new List<Mesh>();
+            foreach (var mesh in test)
+            {
+                var singleMesh = new Mesh();
+                singleMesh.Append(mesh);
+                singleMesh.Faces.ConvertQuadsToTriangles();
+                brep_mesh.Add(singleMesh);
             }
             #endregion
 
             #region 输出内容
-            DA.SetDataTree(0, outputEC);
+            DA.SetDataList(0, brep_mesh);
 
             #endregion
         }
@@ -156,7 +144,7 @@ namespace UrbanX_GH
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("19371B65-890A-479B-8CE5-9BBBD6DDEE3C"); }
+            get { return new Guid("C55C3318-A01D-49EC-9F24-3C63E4F98945"); }
         }
     }
 }

@@ -48,7 +48,7 @@ namespace UrbanX.Application
         /// <param name="hour"></param>
         /// <param name="northAngle"></param>
         /// <param name="timeZone"></param>
-        public SunCalculator(double latitude, double height, double longtitude, int year = 2018, int month = 12, int day = 23, int hour = 12, double northAngle = 0d, double timeZone = 8d)
+        public SunCalculator(double latitude, double longtitude, double height,  int year = 2018, int month = 12, int day = 23, int hour = 12, double northAngle = 0d, double timeZone = 8d)
         {
             _selfCenpt = new NTSPoint(0, 0, 0);
             _selfScale = 1d;
