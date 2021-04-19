@@ -7,6 +7,7 @@ using gs;
 using System.IO;
 using NTS = NetTopologySuite;
 using Rh=Rhino.Geometry;
+using System.Drawing;
 
 namespace UrbanX_GH.Application.Geometry
 {
@@ -514,11 +515,12 @@ namespace UrbanX_GH.Application.Geometry
             //return hitTrianglesDic;
         }
 
-        public static double[] CalcRaysGetArea(DMesh3 mesh, IEnumerable<Vector3d> originList, int segmentHeight = 10, int segment = 10, double angle = 360, double radius = 100, double angleHeight = 90)
+        public static double[] CalcRaysGetArea(DMesh3 mesh, IEnumerable<Vector3d> originList, out Dictionary<int, int> CalcRaysDic, int segmentHeight = 10, int segment = 10, double angle = 360, double radius = 100, double angleHeight = 90)
         {
             DMesh3 meshIn = new DMesh3(mesh);
             DMeshAABBTree3 spatial = new DMeshAABBTree3(meshIn);
             spatial.Build();
+            Dictionary<int, int> hitIndexDic = new Dictionary<int, int>();
             double[] hitTriArea = new double[originList.Count()];
 
             for (int ptIndex = 0; ptIndex < originList.Count(); ptIndex++)
@@ -545,6 +547,21 @@ namespace UrbanX_GH.Application.Geometry
                         if (hit_dist <= radius)
                         {
                             var triArea=meshIn.GetTriArea(hit_tid);
+                            var tempTri = meshIn.GetTriangle(hit_tid);
+                            for (int eachVertex = 0; eachVertex < tempTri.array.Length; eachVertex++)
+                            {
+                                var hit_vid = tempTri[eachVertex];
+                                if (hitIndexDic.ContainsKey(hit_vid))
+                                {
+                                    var temp_amount = hitIndexDic[hit_vid];
+                                    hitIndexDic[hit_vid] = temp_amount + 1;
+                                }
+                                else
+                                {
+                                    hitIndexDic.Add(hit_vid, 1);
+                                }
+                            }
+
                             rayArea += triArea;
                         }
                         #endregion
@@ -554,6 +571,9 @@ namespace UrbanX_GH.Application.Geometry
 
                 hitTriArea[ptIndex] = rayArea;
             }
+
+            CalcRaysDic = hitIndexDic;
+
             return hitTriArea;
             //return hitTrianglesDic;
         }
@@ -683,7 +703,7 @@ namespace UrbanX_GH.Application.Geometry
             return meshCollection;
         }
 
-        public static Rh.Brep CreateBrepMinusTopBtn(Rh.Brep single, out double size)
+        public static Rh.Brep CreateBrepMinusTopBtn(Rh.Brep single, out double size, out Rh.Point3d centPt)
         {
             var faceList = single.Faces;
             var heightList = new List<double>(faceList.Count);
@@ -701,9 +721,16 @@ namespace UrbanX_GH.Application.Geometry
             indexList.Remove(heightList.IndexOf(min));
 
             Rh.Brep result = new Rh.Brep();
-            for (int k = 0; k < indexList.Count; k++)
-                result.Append(single.Faces[indexList[k]].ToBrep());
+            var sumArea = 0d;
+            for (int k = 0; k < indexList.Count; k++) { 
+                var tempBrep = single.Faces[indexList[k]].ToBrep();
+                sumArea += tempBrep.GetArea();
+                result.Append(tempBrep);
+            }
 
+            
+            centPt = single.GetBoundingBox(false).Center;
+            size = sumArea;
 
             return result;
         }
@@ -719,6 +746,11 @@ namespace UrbanX_GH.Application.Geometry
         public static Vector3d NTSPt2Vector3d(NTS.Geometries.Point NTSPt, double height=0)
         {
             return new Vector3d(NTSPt.X, NTSPt.Y, height);
+        }
+
+        public static Vector3d NTSPt2Vector3d(NTS.Geometries.Point NTSPt)
+        {
+            return new Vector3d(NTSPt.X, NTSPt.Y, NTSPt.Z);
         }
 
         public static DMesh3[] ConvertFromRh_Meshes(Rh.Mesh[] meshList)
@@ -748,6 +780,22 @@ namespace UrbanX_GH.Application.Geometry
             return new NTS.Geometries.Point(pt.X, pt.Y, pt.Z);
         }
 
+        private static NTS.Geometries.Point ConvertFromRh_Point2D(Rh.Point3d pt)
+        {
+            return new NTS.Geometries.Point(pt.X, pt.Y, 0);
+        }
+
+        public static NTS.Geometries.Point[] ConvertFromRh_Point( IEnumerable<Rh.Point3d> pts)
+        {
+            var count = pts.Count();
+            NTS.Geometries.Point[] ptResult = new NTS.Geometries.Point[count]; 
+            for (int i = 0; i < count; i++)
+            {
+                ptResult[i]= new NTS.Geometries.Point(pts.ElementAt(i).X, pts.ElementAt(i).Y, pts.ElementAt(i).Z);
+            }
+            return ptResult;
+        }
+
         public static DMesh3 ConvertFromRh_Mesh(Rh.Mesh Rh_mesh)
         {
             var Rh_vertex = Rh_mesh.Vertices;
@@ -755,6 +803,133 @@ namespace UrbanX_GH.Application.Geometry
             var Rh_normals = Rh_mesh.Normals;
 
             return  DMesh3Builder.Build(Rh_vertex, Rh_tri, Rh_normals);
+        }
+
+        public static Dictionary<NetTopologySuite.Geometries.Point, double> GenerateDic(List<double> areaList, List<Rh.Point3d> ptList)
+        {
+            Dictionary<NetTopologySuite.Geometries.Point, double> ptDic = new Dictionary<NTS.Geometries.Point, double>();
+            for (int i = 0; i < areaList.Count; i++)
+            {
+                var pt2d = ConvertFromRh_Point2D(ptList[i]);
+                if (ptDic.ContainsKey(pt2d))
+                {
+                    ptDic[pt2d] += areaList[i];
+                }
+                else
+                {
+                    ptDic.Add(pt2d, areaList[i]);
+                }
+                
+            }
+            return ptDic;
+        }
+
+        public static Rh.Mesh ConvertFromDMesh3(DMesh3 meshInput)
+        {
+            Rh.Mesh meshOutput = new Rh.Mesh();
+
+            var tempMeshInputVertices = meshInput.Vertices().ToArray();
+            var rhVerticesList = ConvertFromDMeshVector(tempMeshInputVertices);
+            var rhFacesList= ConvertFromDMeshTri(meshInput.Triangles().ToArray());
+            
+            meshOutput.Vertices.AddVertices(rhVerticesList);
+            meshOutput.Faces.AddFaces(rhFacesList);
+
+            for (int i = 0; i < tempMeshInputVertices.Length; i++)
+            {
+                meshOutput.VertexColors.Add(ConvertFromDMeshVector(meshInput.GetVertexColor(i)));
+            }
+
+            return meshOutput;
+
+        }
+
+        public static Rh.Mesh ConvertFromDMesh3NoColor(DMesh3 meshInput)
+        {
+            Rh.Mesh meshOutput = new Rh.Mesh();
+
+            var tempMeshInputVertices = meshInput.Vertices().ToArray();
+            var rhVerticesList = ConvertFromDMeshVector(tempMeshInputVertices);
+            var rhFacesList = ConvertFromDMeshTri(meshInput.Triangles().ToArray());
+
+            meshOutput.Vertices.AddVertices(rhVerticesList);
+            meshOutput.Faces.AddFaces(rhFacesList);
+
+            return meshOutput;
+
+        }
+
+        private static Rh.Point3d[] ConvertFromDMeshVector(Vector3d[] meshVertices)
+        {
+            Rh.Point3d[] ptResult = new Rh.Point3d[meshVertices.Length];
+            for (int i = 0; i < meshVertices.Length; i++)
+            {
+                ptResult[i] = new Rh.Point3d(meshVertices[i].x, meshVertices[i].y, meshVertices[i].z);
+            }
+            return ptResult;
+        }
+
+        private static Rh.MeshFace[] ConvertFromDMeshTri(Index3i[] meshTri)
+        {
+            Rh.MeshFace[] meshResult = new Rh.MeshFace[meshTri.Length];
+            for (int i = 0; i < meshTri.Length; i++)
+            {
+                meshResult[i] = new Rh.MeshFace(meshTri[i].a, meshTri[i].b, meshTri[i].c);
+            }
+            return meshResult;
+        }
+
+        private static Color ConvertFromDMeshVector(Vector3f vertexColor)
+        {
+            var tempColor=hsb2rgb(vertexColor.x, vertexColor.y, vertexColor.z);
+            return Color.FromArgb(tempColor[0], tempColor[1], tempColor[2]);
+        }
+
+        private static int[] hsb2rgb(float h, float s, float v)
+        {
+            float r = 0, g = 0, b = 0;
+            int i = (int)((h / 60) % 6);
+            float f = (h / 60) - i;
+            float p = v * (1 - s);
+            float q = v * (1 - f * s);
+            float t = v * (1 - (1 - f) * s);
+            switch (i)
+            {
+                case 0:
+                    r = v;
+                    g = t;
+                    b = p;
+                    break;
+                case 1:
+                    r = q;
+                    g = v;
+                    b = p;
+                    break;
+                case 2:
+                    r = p;
+                    g = v;
+                    b = t;
+                    break;
+                case 3:
+                    r = p;
+                    g = q;
+                    b = v;
+                    break;
+                case 4:
+                    r = t;
+                    g = p;
+                    b = v;
+                    break;
+                case 5:
+                    r = v;
+                    g = p;
+                    b = q;
+                    break;
+                default:
+                    break;
+            }
+            return new int[] { (int) (r * 255.0), (int) (g * 255.0),
+            (int) (b * 255.0) };
         }
         #endregion
     }

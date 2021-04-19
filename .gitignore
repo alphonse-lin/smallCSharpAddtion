@@ -996,3 +996,4 @@ Application/obj/Release/netcoreapp3.1/Application.AssemblyInfoInputs.cache
 Application/obj/Release/netcoreapp3.1/Application.AssemblyInfo.cs
 Application/obj/Release/netcoreapp3.1/.NETCoreApp,Version=v3.1.AssemblyAttributes.cs
 *.csv
+*.xmind

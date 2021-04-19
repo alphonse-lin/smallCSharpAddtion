@@ -471,12 +471,12 @@ namespace UrbanX.Application
             #endregion
 
             #region 计算行道树CO2吸收量
-            string connectionString = "Host=39.107.177.223;Username=postgres;Password=admin;Database=urbanxlab_db";
-            string treeName = "毛白杨";
-            var DBH = new List<double>() { 6d, 12d };
+            //string connectionString = "Host=39.107.177.223;Username=postgres;Password=admin;Database=urbanxlab_db";
+            //string treeName = "毛白杨";
+            //var DBH = new List<double>() { 6d, 12d };
 
-            var calc = new TreeCO2_calculation(connectionString, treeName, DBH);
-            Console.WriteLine("树木体积为{0}m³, Biomass为{2}kg, 总吸收二氧化碳量为{2}kg", calc.totalVolume, calc.totalDWB, calc.totalCO2);
+            //var calc = new TreeCO2_calculation(connectionString, treeName, DBH);
+            //Console.WriteLine("树木体积为{0}m³, Biomass为{2}kg, 总吸收二氧化碳量为{2}kg", calc.totalVolume, calc.totalDWB, calc.totalCO2);
             #endregion
 
             #region 测试自动生成ppt
@@ -702,55 +702,65 @@ namespace UrbanX.Application
             #endregion
 
             #region 002_计算射线指标
-            //var jsonFilePath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\building_center.geojson";
+            var jsonFilePath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\building_center.geojson";
             ////var jsonFilePath = @"C:\Users\CAUPD-BJ141\Desktop\西安建筑基底_32650.geojson";
-            //string exportPath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\export_collection_center.obj";
+            string exportPath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\export_collection_center_remesh.obj";
 
             ////读取mesh
-            //var inputDataCollection = MeshCreation.ReadJsonData(jsonFilePath, "brepHeight", out double[] heightCollection);
-            //ToolManagers.TimeCalculation(start, "读取");
+            var inputDataCollection = MeshCreation.ReadJsonData(jsonFilePath, "baseHeight", "brepHeight", out double[] heightCollection);
+            ToolManagers.TimeCalculation(start, "读取");
 
             ////创建mesh simple，输出中心点与面积
-            //var simpleMesh=MeshCreation.ExtrudeMeshFromPtMinusTopBtn(inputDataCollection, heightCollection, out Dictionary<NetTopologySuite.Geometries.Point, double> secPtDic);
+            var simpleMesh = MeshCreation.ExtrudeMeshFromPtMinusTopBtn(inputDataCollection, heightCollection, out Dictionary<NetTopologySuite.Geometries.Point, double> secPtDic);
             //ToolManagers.TimeCalculation(start, "挤出mesh并输出数据");
 
-            ////初始化可视点数据
-            //var ptOrigin = new List<NetTopologySuite.Geometries.Point>() {
-            //    new  NetTopologySuite.Geometries.Point(0,0),
-            //    new  NetTopologySuite.Geometries.Point(-100,-100),
-            //    new  NetTopologySuite.Geometries.Point(-200,-200),
-            //    new  NetTopologySuite.Geometries.Point(-300,-300),
-            //    new  NetTopologySuite.Geometries.Point(-400,-400),
-            //};
-            //var count = 1;
-            //var ptLargeList = new List<NetTopologySuite.Geometries.Point>(count * ptOrigin.Count);
+            //初始化可视点数据
+            var ptOrigin = new List<NetTopologySuite.Geometries.Point>() {
+                new  NetTopologySuite.Geometries.Point(0,0),
+                new  NetTopologySuite.Geometries.Point(-100,-100),
+                new  NetTopologySuite.Geometries.Point(-200,-200),
+                new  NetTopologySuite.Geometries.Point(-300,-300),
+                new  NetTopologySuite.Geometries.Point(-400,-400),
+            };
+            var count = 1;
+            var ptLargeList = new List<NetTopologySuite.Geometries.Point>(count * ptOrigin.Count);
 
-            //for (int i = 0; i < count; i++)
-            //    ptLargeList.AddRange(ptOrigin);
-            //ToolManagers.TimeCalculation(start, "初始化数据");
+            for (int i = 0; i < count; i++)
+                ptLargeList.AddRange(ptOrigin);
+            ToolManagers.TimeCalculation(start, "初始化数据");
 
-            ////开始计算可视范围内的点，及所包含建筑的总面积（去除顶面和底面）
-            //var wholePtList=Poly2DCreation.ContainsInPts(ptLargeList.ToArray(), secPtDic.Keys.ToArray(), 300);
-            //var wholeAreaList = Poly2DCreation.ContainsAreaInPts(wholePtList, secPtDic);
-            //ToolManagers.TimeCalculation(start, "计算范围内总面积");
+            //开始计算可视范围内的点，及所包含建筑的总面积（去除顶面和底面）
+            var wholePtList = Poly2DCreation.ContainsInPts(ptLargeList.ToArray(), secPtDic.Keys.ToArray(), 300);
+            var wholeAreaList = Poly2DCreation.ContainsAreaInPts(wholePtList, secPtDic);
+            ToolManagers.TimeCalculation(start, "计算范围内总面积");
 
-            ////创建细分mesh
-            //var remeshedMesh = MeshCreation.SimpleRemesher(simpleMesh,10, 0.5);
-            //ToolManagers.TimeCalculation(start, "细分");
+            //创建细分mesh
+            var remeshedMesh = MeshCreation.SimpleRemesher(simpleMesh, 10, 0.5);
+            ToolManagers.TimeCalculation(start, "细分");
 
-            ////计算射线及比例，按照largeList顺序
-            //var visibleAreaList = MeshCreation.CalcRaysGetArea(remeshedMesh, MeshCreation.NTSPtList2Vector3dList(ptLargeList), 10, 100, 360, 200, 14);
-            //ToolManagers.TimeCalculation(start, "计算射线");
-
-            //var visibilityPercentage = MeshCreation.CalcVisibilityPercent(visibleAreaList, wholeAreaList);
-            //ToolManagers.TimeCalculation(start, "计算可视总面积");
+            ////输出细分Mesh
+            MeshCreation.ExportMeshAsObj(exportPath, remeshedMesh, false);
+            ToolManagers.TimeCalculation(start, "输出模型");
 
 
+            //加载细分后模型
+            var importPath = @"E:\114_temp\008_代码集\002_extras\smallCharpTool\Application\data\geometryTest\export_collection_center_remesh.obj";
+            var loadedMesh = MeshCreation.ImportMesh(importPath);
+            ToolManagers.TimeCalculation(start, "加载模型");
 
-            //////输出计算后Mesh
-            ////var exportPath_Calc = @"E:\114_temp\008_代码集\002_extras\smallCharpTool\Application\data\geometryTest\export_calc.stl";
-            ////MeshCreation.ExportMeshAsStl(exportPath_Calc, meshFromRays, true);
-            ////ToolManagers.TimeCalculation(start, "输出计算后模型");
+            //计算射线及比例，按照largeList顺序
+            var visibleAreaList = MeshCreation.CalcRaysGetArea(remeshedMesh, MeshCreation.NTSPtList2Vector3dList(ptLargeList), 10, 100, 360, 200, 14);
+            ToolManagers.TimeCalculation(start, "计算射线");
+
+            var visibilityPercentage = MeshCreation.CalcVisibilityPercent(visibleAreaList, wholeAreaList);
+            ToolManagers.TimeCalculation(start, "计算可视总面积");
+
+
+
+            ////输出计算后Mesh
+            //var exportPath_Calc = @"E:\114_temp\008_代码集\002_extras\smallCharpTool\Application\data\geometryTest\export_calc.stl";
+            //MeshCreation.ExportMeshAsStl(exportPath_Calc, meshFromRays, true);
+            //ToolManagers.TimeCalculation(start, "输出计算后模型");
 
             #endregion
 

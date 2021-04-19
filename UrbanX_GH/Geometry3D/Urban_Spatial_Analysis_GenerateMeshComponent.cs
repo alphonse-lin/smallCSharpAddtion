@@ -32,8 +32,8 @@ namespace UrbanX_GH
         /// new tabs/panels will automatically be created.
         /// </summary>
         public XElement meta;
-        public static string c_id = "Urban_Sustainability_ExposureRate3D";
-        public static string c_moduleName = "Urban_Sustainability";
+        public static string c_id = "Urban_Spatial_Analysis_GenerateMesh";
+        public static string c_moduleName = "Urban_Spatial_Analysis";
 
         #region 备用
         //public Urban_SustainabilityComponent()
@@ -46,7 +46,6 @@ namespace UrbanX_GH
         public override GH_Exposure Exposure => GH_Exposure.primary;
         public UrbanX_Sustainability_MeshSub_Component() : base("", "", "", "", "")
         {
-            //ToDo 完善这部分内容
             //AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler(SharedUtils.Resolve);
             this.meta = SharedResources_Utils.GetXML(c_moduleName, c_id);
             this.Name = this.meta.Element("name").Value;
@@ -62,11 +61,11 @@ namespace UrbanX_GH
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            //ToDo 完善这部分内容
             this.meta = SharedResources_Utils.GetXML(c_moduleName, c_id);
             List<XElement> list = this.meta.Element("inputs").Elements("input").ToList<XElement>();
-            pManager.AddGenericParameter((string)list[0].Attribute("name"), (string)list[0].Attribute("nickname"), (string)list[0].Attribute("description"), GH_ParamAccess.item);
-            pManager.AddGenericParameter((string)list[0].Attribute("name"), (string)list[0].Attribute("nickname"), (string)list[0].Attribute("description"), GH_ParamAccess.item);
+            pManager.AddGenericParameter((string)list[0].Attribute("name"), (string)list[0].Attribute("nickname"), (string)list[0].Attribute("description"), GH_ParamAccess.list);
+            pManager.AddNumberParameter((string)list[1].Attribute("name"), (string)list[1].Attribute("nickname"), (string)list[1].Attribute("description"), GH_ParamAccess.item,-1);
+            pManager[1].Optional = false;
         }
 
         /// <summary>
@@ -74,10 +73,11 @@ namespace UrbanX_GH
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            //ToDo 完善这部分内容
             this.meta = SharedResources_Utils.GetXML(c_moduleName, c_id);
             List<XElement> list = this.meta.Element("outputs").Elements("output").ToList<XElement>();
-            pManager.AddGenericParameter((string)list[0].Attribute("name"), (string)list[0].Attribute("nickname"), (string)list[0].Attribute("description"), GH_ParamAccess.list);
+            pManager.AddGenericParameter((string)list[0].Attribute("name"), (string)list[0].Attribute("nickname"), (string)list[0].Attribute("description"), GH_ParamAccess.item);
+            pManager.AddGenericParameter((string)list[1].Attribute("name"), (string)list[1].Attribute("nickname"), (string)list[1].Attribute("description"), GH_ParamAccess.list);
+            pManager.AddGenericParameter((string)list[2].Attribute("name"), (string)list[2].Attribute("nickname"), (string)list[2].Attribute("description"), GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -87,38 +87,45 @@ namespace UrbanX_GH
         /// to store data in output parameters.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            Brep[] brepIn = null;
-            double gridSize = 10;
-            if (!DA.GetData(0, ref brepIn)) { return; }
+            List<Brep> brepInList = new List<Brep>();
+            double gridSize = -1;
+            if (!DA.GetDataList<Brep>(0, brepInList)) { return; }
             if (!DA.GetData(1, ref gridSize)) { return; }
 
             #region 细分mesh
-
-            var test = new List<Mesh[]>(brepIn.Length); ;
+            Brep[] brepIn = brepInList.ToArray();
+            var meshOut = new Mesh[brepIn.Length];
+            var sizeList = new double[brepIn.Length];
+            var cenPtList = new Point3d[brepIn.Length];
+            
             System.Threading.Tasks.Parallel.For(0, brepIn.Length, i =>
             {
-                var singleBrep = MeshCreation.CreateBrepMinusTopBtn(brepIn[i]);
-
+                var singleBrep = MeshCreation.CreateBrepMinusTopBtn(brepIn[i], out double size, out Point3d cenPt);
+                if (gridSize == -1)
+                    gridSize = RhinoToolManager.GetMaxBounds(brepIn[i])/3;
+                
                 var mp = MeshingParameters.Default;
                 mp.MaximumEdgeLength = gridSize;
                 mp.MinimumEdgeLength = gridSize;
                 mp.GridAspectRatio = 1;
 
-                test.Add(Mesh.CreateFromBrep(brepIn[i], mp));
+                var tempMeshArray=Mesh.CreateFromBrep(singleBrep, mp);
+                var singleMesh = new Mesh();
+                singleMesh.Append(tempMeshArray);
+                singleMesh.Faces.ConvertQuadsToTriangles();
+                meshOut[i]=(singleMesh);
+                sizeList[i] = size;
+                cenPtList[i] = cenPt;
             });
 
-            var brep_mesh = new List<Mesh>();
-            foreach (var mesh in test)
-            {
-                var singleMesh = new Mesh();
-                singleMesh.Append(mesh);
-                singleMesh.Faces.ConvertQuadsToTriangles();
-                brep_mesh.Add(singleMesh);
-            }
+            //创建mesh simple，输出中心点与面积
+            var simpleMesh = RhinoToolManager.ConvertFromRhMesh(meshOut);
             #endregion
 
             #region 输出内容
-            DA.SetDataList(0, brep_mesh);
+            DA.SetData(0, simpleMesh);
+            DA.SetDataList(1, sizeList);
+            DA.SetDataList(2, cenPtList);
 
             #endregion
         }
@@ -144,7 +151,7 @@ namespace UrbanX_GH
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("C55C3318-A01D-49EC-9F24-3C63E4F98945"); }
+            get { return new Guid("B5325E21-D79E-400C-93C3-9F74519CC5EA"); }
         }
     }
 }

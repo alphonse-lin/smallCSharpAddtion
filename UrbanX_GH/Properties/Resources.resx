@@ -142,7 +142,7 @@
         &lt;output id="2"  name="outputGarbageConsumption" nickname="oGC" description="result GC from site parameter, reuslt=[min,max], unit=kg"/&gt;
       &lt;/outputs&gt;
     &lt;/component&gt;
-    
+
     &lt;!-- 从类读取，能源消耗量计算 --&gt;
     &lt;component&gt;
       &lt;id&gt;Urban_Sustainability_Energy&lt;/id&gt;
@@ -158,7 +158,7 @@
         &lt;output id="0"  name="outputEnergyConsumption" nickname="oEC" description="result EC from site parameter, reuslt=[min,max], unit=kw"/&gt;
       &lt;/outputs&gt;
     &lt;/component&gt;
-    
+
     &lt;!-- 从类读取，水资源消耗量计算--&gt;
     &lt;component&gt;
       &lt;id&gt;Urban_Sustainability_Water&lt;/id&gt;
@@ -187,7 +187,8 @@
         &lt;input id="0" name="siteParameter" nickname="siteP" description="Parameter for index calculation"/&gt;
       &lt;/inputs&gt;
       &lt;outputs&gt;
-        &lt;output id="0"  name="outputGarbageConsumption" nickname="oGC" description="result GC from site parameter, reuslt=[min,max], unit=kg"/&gt;&lt;output id="0"  name="outputGarbageConsumption" nickname="oGC" description="result GC from site parameter, reuslt=[min,max], unit=kg"/&gt;
+        &lt;output id="0"  name="outputGarbageConsumption" nickname="oGC" description="result GC from site parameter, reuslt=[min,max], unit=kg"/&gt;
+        &lt;output id="0"  name="outputGarbageConsumption" nickname="oGC" description="result GC from site parameter, reuslt=[min,max], unit=kg"/&gt;
       &lt;/outputs&gt;
     &lt;/component&gt;
 
@@ -226,7 +227,7 @@
         &lt;output id="0"  name="outputEnergyConsumption" nickname="oEC" description="result EC from site parameter, reuslt=[min,max], unit=kw"/&gt;
       &lt;/outputs&gt;
     &lt;/component&gt;
-    
+
     &lt;!-- 从现有数据读取，水资源消耗量计算--&gt;
     &lt;component&gt;
       &lt;id&gt;Urban_Sustainability_Custom_Water&lt;/id&gt;
@@ -260,8 +261,8 @@
         &lt;output id="0"  name="outputGarbageConsumption" nickname="oGC" description="result GC from site parameter, reuslt=[min,max], unit=kg"/&gt;
       &lt;/outputs&gt;
     &lt;/component&gt;
-    
-      &lt;!-- 从现有数据读取，建筑曝光率计算--&gt;
+
+    &lt;!-- 从现有数据读取，建筑曝光率计算--&gt;
     &lt;component&gt;
       &lt;id&gt;Urban_Sustainability_ExposureRate&lt;/id&gt;
       &lt;name&gt;Urban_Sustainability_ExposureRate&lt;/name&gt;
@@ -282,7 +283,7 @@
       &lt;/outputs&gt;
     &lt;/component&gt;
 
-            &lt;!-- 从现有数据读取，计算人口数据--&gt;
+    &lt;!-- 从现有数据读取，计算人口数据--&gt;
     &lt;component&gt;
       &lt;id&gt;Urban_Sustainability_CalculatePopulation&lt;/id&gt;
       &lt;name&gt;Urban_Sustainability_CalculatePopulation&lt;/name&gt;
@@ -298,6 +299,49 @@
       &lt;/outputs&gt;
     &lt;/component&gt;
 
+  &lt;/module&gt;
+  
+  &lt;module name="Urban_Spatial_Analysis"&gt;
+    &lt;!-- 从Rhino Brep转换到Rhino Mesh--&gt;
+    &lt;component&gt;
+      &lt;id&gt;Urban_Spatial_Analysis_GenerateMesh&lt;/id&gt;
+      &lt;name&gt;Urban_Spatial_Analysis_GenerateMesh&lt;/name&gt;
+      &lt;nickname&gt;U_SA_GM&lt;/nickname&gt;
+      &lt;description&gt;convert rhino brep into rhino mesh&lt;/description&gt;
+      &lt;category&gt;UrbanX&lt;/category&gt;
+      &lt;subCategory&gt;Urban_Spatial&lt;/subCategory&gt;
+      &lt;inputs&gt;
+        &lt;input id="0" name="brep" nickname="B" description="input brep"/&gt;
+        &lt;input id="1" name="subdivisionSize" nickname="subSize" description="default is -1, system would auto-generate simplest geometry"/&gt;
+      &lt;/inputs&gt;
+      &lt;outputs&gt;
+        &lt;output id="0"  name="simpleMesh" nickname="M" description="output simplest mesh"/&gt;
+        &lt;output id="1"  name="area" nickname="A" description="output area"/&gt;
+        &lt;output id="2"  name="centerPoint" nickname="cenPt" description="output centerPt"/&gt;
+      &lt;/outputs&gt;
+    &lt;/component&gt;
+
+    &lt;!-- 计算三维视线曝光，并返回每个点的可视概率--&gt;
+    &lt;component&gt;
+      &lt;id&gt;Urban_Spatial_Analysis_ExposureRate3D&lt;/id&gt;
+      &lt;name&gt;Urban_Spatial_Analysis_ExposureRate3D&lt;/name&gt;
+      &lt;nickname&gt;U_SA_ER3d&lt;/nickname&gt;
+      &lt;description&gt;calculate the visibility ratio of each pt in 3d context(ratio=visible building/buildings in view range)&lt;/description&gt;
+      &lt;category&gt;UrbanX&lt;/category&gt;
+      &lt;subCategory&gt;Urban_Spatial&lt;/subCategory&gt;
+      &lt;inputs&gt;
+        &lt;input id="0"  name="viewPt" nickname="vPt" description="view pts in the context"/&gt;
+        &lt;input id="1"  name="simpleMesh" nickname="M" description="input simplest mesh"/&gt;
+        &lt;input id="2"  name="area" nickname="A" description="input area"/&gt;
+        &lt;input id="3"  name="centerPoint" nickname="cenPt" description="input centerPt"/&gt;
+        &lt;input id="4" name="subdivisionInMesh" nickname="sSize" description="subdivision size in mesh"/&gt;
+        &lt;input id="5" name="viewRange" nickname="vRange" description="view range in each pt as radius"/&gt;
+      &lt;/inputs&gt;
+      &lt;outputs&gt;
+        &lt;output id="0"  name="ColoredMesh" nickname="M" description="output colored mesh"/&gt;
+        &lt;output id="1"  name="ratio" nickname="A" description="output ratio of each pt"/&gt;
+      &lt;/outputs&gt;
+    &lt;/component&gt;
   &lt;/module&gt;
 &lt;/components&gt;</value>
   </data>

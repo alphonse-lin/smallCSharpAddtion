@@ -15,6 +15,7 @@ using UrbanX.Planning.UrbanDesign;
 using UrbanX_GH.Properties;
 using UrbanX_GH.Application;
 using UrbanX_GH.Application.Geometry;
+using g3;
 
 
 // In order to load the result of this wizard, you will also need to
@@ -34,8 +35,8 @@ namespace UrbanX_GH
         /// new tabs/panels will automatically be created.
         /// </summary>
         public XElement meta;
-        public static string c_id = "Urban_Sustainability_ExposureRate3D";
-        public static string c_moduleName = "Urban_Sustainability";
+        public static string c_id = "Urban_Spatial_Analysis_ExposureRate3D";
+        public static string c_moduleName = "Urban_Spatial_Analysis";
 
         #region 备用
         //public Urban_SustainabilityComponent()
@@ -67,8 +68,14 @@ namespace UrbanX_GH
             //ToDo 完善这部分内容
             this.meta = SharedResources_Utils.GetXML(c_moduleName, c_id);
             List<XElement> list = this.meta.Element("inputs").Elements("input").ToList<XElement>();
-            pManager.AddGenericParameter((string)list[0].Attribute("name"), (string)list[0].Attribute("nickname"), (string)list[0].Attribute("description"), GH_ParamAccess.item);
-            pManager.AddGenericParameter((string)list[0].Attribute("name"), (string)list[0].Attribute("nickname"), (string)list[0].Attribute("description"), GH_ParamAccess.item);
+            pManager.AddPointParameter((string)list[0].Attribute("name"), (string)list[0].Attribute("nickname"), (string)list[0].Attribute("description"), GH_ParamAccess.list);
+            pManager.AddGenericParameter((string)list[1].Attribute("name"), (string)list[1].Attribute("nickname"), (string)list[1].Attribute("description"), GH_ParamAccess.item);
+            pManager.AddNumberParameter((string)list[2].Attribute("name"), (string)list[2].Attribute("nickname"), (string)list[2].Attribute("description"), GH_ParamAccess.list);
+            pManager.AddPointParameter((string)list[3].Attribute("name"), (string)list[3].Attribute("nickname"), (string)list[3].Attribute("description"), GH_ParamAccess.list);
+            pManager.AddGenericParameter((string)list[4].Attribute("name"), (string)list[4].Attribute("nickname"), (string)list[4].Attribute("description"), GH_ParamAccess.item);
+            pManager.AddGenericParameter((string)list[5].Attribute("name"), (string)list[5].Attribute("nickname"), (string)list[5].Attribute("description"), GH_ParamAccess.item);
+            pManager[4].Optional = false;
+            pManager[5].Optional = false;
         }
 
         /// <summary>
@@ -79,7 +86,8 @@ namespace UrbanX_GH
             //ToDo 完善这部分内容
             this.meta = SharedResources_Utils.GetXML(c_moduleName, c_id);
             List<XElement> list = this.meta.Element("outputs").Elements("output").ToList<XElement>();
-            pManager.AddGenericParameter((string)list[0].Attribute("name"), (string)list[0].Attribute("nickname"), (string)list[0].Attribute("description"), GH_ParamAccess.list);
+            pManager.AddGenericParameter((string)list[0].Attribute("name"), (string)list[0].Attribute("nickname"), (string)list[0].Attribute("description"), GH_ParamAccess.item);
+            pManager.AddGenericParameter((string)list[1].Attribute("name"), (string)list[1].Attribute("nickname"), (string)list[1].Attribute("description"), GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -89,50 +97,48 @@ namespace UrbanX_GH
         /// to store data in output parameters.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            Rh.Mesh[] meshInput = null;
-            double gridSize = 10;
-            if (!DA.GetData(0, ref meshInput)) { return; }
-            if (!DA.GetData(1, ref gridSize)) { return; }
+            List<Rh.Point3d> inputPtList = new List<Rh.Point3d>();
+            DMesh3 simpleMesh = new DMesh3();
+            List<double> inputAreaList = new List<double>();
+            List<Rh.Point3d> inputCentPtList = new List<Rh.Point3d>();
+            int subdivision = 10;
+            double viewRangeRadius = 300d;
 
-            #region 细分mesh
-            var jsonFilePath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\building_center.geojson";
-            //var jsonFilePath = @"C:\Users\CAUPD-BJ141\Desktop\西安建筑基底_32650.geojson";
-            string exportPath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\export_collection_center.obj";
+            if (!DA.GetDataList(0, inputPtList)) { return; }
+            if (!DA.GetData(1, ref simpleMesh)) { return; }
+            if (!DA.GetDataList(2, inputAreaList)) { return; }
+            if (!DA.GetDataList(3, inputCentPtList)) { return; }
+            
+            if (!DA.GetData(4, ref viewRangeRadius)) { return; }
+            if (!DA.GetData(5, ref viewRangeRadius)) { return; }
 
-            //创建mesh simple，输出中心点与面积
-            var simpleMesh = MeshCreation.ExtrudeMeshFromPtMinusTopBtn(inputDataCollection, heightCollection, out Dictionary<NetTopologySuite.Geometries.Point, double> secPtDic);
 
-            //初始化可视点数据
-            var ptOrigin = new List<NetTopologySuite.Geometries.Point>() {
-                new  NetTopologySuite.Geometries.Point(0,0),
-                new  NetTopologySuite.Geometries.Point(-100,-100),
-                new  NetTopologySuite.Geometries.Point(-200,-200),
-                new  NetTopologySuite.Geometries.Point(-300,-300),
-                new  NetTopologySuite.Geometries.Point(-400,-400),
-            };
-            var count = 1;
-            var ptLargeList = new List<NetTopologySuite.Geometries.Point>(count * ptOrigin.Count);
-
-            for (int i = 0; i < count; i++)
-                ptLargeList.AddRange(ptOrigin);
+            ////创建mesh simple，输出中心点与面积
+            //var simpleMesh=RhinoToolManager.ConvertFromRhMesh(inputMeshList);
+            var secPtDic = MeshCreation.GenerateDic(inputAreaList,inputCentPtList);
+            var ptLargeList = MeshCreation.ConvertFromRh_Point(inputPtList);
 
             //开始计算可视范围内的点，及所包含建筑的总面积（去除顶面和底面）
-            var wholePtList = Poly2DCreation.ContainsInPts(ptLargeList.ToArray(), secPtDic.Keys.ToArray(), 300);
+            var wholePtList = Poly2DCreation.ContainsInPts(ptLargeList, secPtDic.Keys.ToArray(), viewRangeRadius);
             var wholeAreaList = Poly2DCreation.ContainsAreaInPts(wholePtList, secPtDic);
 
-            //创建细分mesh
-            var remeshedMesh = MeshCreation.SimpleRemesher(simpleMesh, 10, 0.5);
-
             //计算射线及比例，按照largeList顺序
-            var visibleAreaList = MeshCreation.CalcRaysGetArea(remeshedMesh, MeshCreation.NTSPtList2Vector3dList(ptLargeList), 10, 100, 360, 200, 14);
+            //var rayResultDic = MeshCreation.CalcRays(loadedMesh, ptLargeList, 10, 100, 360, 200, 14);
+            var visibleAreaList = MeshCreation.CalcRaysGetArea(simpleMesh, MeshCreation.NTSPtList2Vector3dList(ptLargeList), out Dictionary<int, int> rayResultDic, subdivision, 100, 360, viewRangeRadius, 90);
             var visibilityPercentage = MeshCreation.CalcVisibilityPercent(visibleAreaList, wholeAreaList);
 
-            #endregion
+            //输出内容
+            ////初始化颜色
+            MeshCreation.InitiateColor(simpleMesh);
+            var meshFromRays = MeshCreation.ApplyColorsBasedOnRays(simpleMesh, rayResultDic, Colorf.Red, Colorf.Black);
 
-            #region 输出内容
-            DA.SetDataList(0, brep_mesh);
+            //输出计算后Mesh
+            //var exportPath_Calc = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\097_Geometry3D\测试\export_test.obj";
+            //MeshCreation.ExportMeshAsObj(exportPath_Calc, meshFromRays, true);
+            var rhMesh =MeshCreation.ConvertFromDMesh3(meshFromRays);
 
-            #endregion
+            DA.SetData(0, rhMesh);
+            DA.SetDataList(1, visibilityPercentage.ToList());
         }
 
         /// <summary>
@@ -156,7 +162,7 @@ namespace UrbanX_GH
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("32108E14-0823-46ED-9C3B-934AEE76C5EB"); }
+            get { return new Guid("E6ED1CAB-DEFE-47D0-9A14-6B5426E1980A"); }
         }
     }
 }
