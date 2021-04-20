@@ -11,8 +11,6 @@ using System.Xml.Linq;
 using CsvHelper;
 using Npgsql;
 using System.Globalization;
-using System.Threading.Tasks;
-
 using UrbanX.Application.Office;
 using UrbanX.Application.Geometry;
 using UrbanXX.IO.GeoJSON;
@@ -711,6 +709,7 @@ namespace UrbanX.Application
             ToolManagers.TimeCalculation(start, "读取");
 
             ////创建mesh simple，输出中心点与面积
+
             var simpleMesh = MeshCreation.ExtrudeMeshFromPtMinusTopBtn(inputDataCollection, heightCollection, out Dictionary<NetTopologySuite.Geometries.Point, double> secPtDic);
             //ToolManagers.TimeCalculation(start, "挤出mesh并输出数据");
 
@@ -762,6 +761,9 @@ namespace UrbanX.Application
             //MeshCreation.ExportMeshAsStl(exportPath_Calc, meshFromRays, true);
             //ToolManagers.TimeCalculation(start, "输出计算后模型");
 
+            #endregion
+
+            #region 003_计算射线指标_基于
             #endregion
 
             #region 003_SketchUp测试

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Xml.Linq;
+using g3;
 using Grasshopper;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Data;
@@ -100,6 +101,7 @@ namespace UrbanX_GH
             
             System.Threading.Tasks.Parallel.For(0, brepIn.Length, i =>
             {
+                //To Do 增加顶面、底面
                 var singleBrep = MeshCreation.CreateBrepMinusTopBtn(brepIn[i], out double size, out Point3d cenPt);
                 if (gridSize == -1)
                     gridSize = RhinoToolManager.GetMaxBounds(brepIn[i])/3;
@@ -119,7 +121,7 @@ namespace UrbanX_GH
             });
 
             //创建mesh simple，输出中心点与面积
-            var simpleMesh = RhinoToolManager.ConvertFromRhMesh(meshOut);
+            var simpleMesh = new DMesh3(RhinoToolManager.ConvertFromRhMesh(meshOut),true);
             #endregion
 
             #region 输出内容

@@ -7,6 +7,7 @@ using gs;
 using System.IO;
 using UrbanXX.IO.GeoJSON;
 using NTS = NetTopologySuite;
+using System.Drawing;
 
 namespace UrbanX.Application.Geometry
 {
@@ -129,6 +130,7 @@ namespace UrbanX.Application.Geometry
             }
             return vectorResult;
         }
+
 
         public static void ExportMeshAsObj(string path, DMesh3 mesh, bool color = false)
         {
@@ -680,7 +682,7 @@ namespace UrbanX.Application.Geometry
                 angleHeight = 90;
             if (angle > 360)
                 angle = 360;
-            double _angleHeight = Math.PI * angleHeight / 180 / segment;
+            double _angleHeight = Math.PI * angleHeight / 180 / segmentHeight;
             double _angle = Math.PI * angle / 180 / segment;
 
             Vector3d[] vertices = new Vector3d[(segmentHeight) * (segment)];
@@ -784,6 +786,9 @@ namespace UrbanX.Application.Geometry
         {
             return new Vector3d(NTSPt.X, NTSPt.Y, height);
         }
+        #endregion
+
+        #region 006_Rhino_Tool_Manager
         #endregion
     }
 }

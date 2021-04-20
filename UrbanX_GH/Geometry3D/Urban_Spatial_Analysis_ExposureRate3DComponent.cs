@@ -16,6 +16,7 @@ using UrbanX_GH.Properties;
 using UrbanX_GH.Application;
 using UrbanX_GH.Application.Geometry;
 using g3;
+using System.Collections.Concurrent;
 
 
 // In order to load the result of this wizard, you will also need to
@@ -72,10 +73,12 @@ namespace UrbanX_GH
             pManager.AddGenericParameter((string)list[1].Attribute("name"), (string)list[1].Attribute("nickname"), (string)list[1].Attribute("description"), GH_ParamAccess.item);
             pManager.AddNumberParameter((string)list[2].Attribute("name"), (string)list[2].Attribute("nickname"), (string)list[2].Attribute("description"), GH_ParamAccess.list);
             pManager.AddPointParameter((string)list[3].Attribute("name"), (string)list[3].Attribute("nickname"), (string)list[3].Attribute("description"), GH_ParamAccess.list);
-            pManager.AddGenericParameter((string)list[4].Attribute("name"), (string)list[4].Attribute("nickname"), (string)list[4].Attribute("description"), GH_ParamAccess.item);
-            pManager.AddGenericParameter((string)list[5].Attribute("name"), (string)list[5].Attribute("nickname"), (string)list[5].Attribute("description"), GH_ParamAccess.item);
+            pManager.AddIntegerParameter((string)list[4].Attribute("name"), (string)list[4].Attribute("nickname"), (string)list[4].Attribute("description"), GH_ParamAccess.item,10);
+            pManager.AddIntegerParameter((string)list[5].Attribute("name"), (string)list[5].Attribute("nickname"), (string)list[5].Attribute("description"), GH_ParamAccess.item,100);
+            pManager.AddNumberParameter((string)list[6].Attribute("name"), (string)list[6].Attribute("nickname"), (string)list[6].Attribute("description"), GH_ParamAccess.item,300.0);
             pManager[4].Optional = false;
             pManager[5].Optional = false;
+            pManager[6].Optional = false;
         }
 
         /// <summary>
@@ -101,7 +104,8 @@ namespace UrbanX_GH
             DMesh3 simpleMesh = new DMesh3();
             List<double> inputAreaList = new List<double>();
             List<Rh.Point3d> inputCentPtList = new List<Rh.Point3d>();
-            int subdivision = 10;
+            int segmentVertical = 10;
+            int segmentHorizontal = 100;
             double viewRangeRadius = 300d;
 
             if (!DA.GetDataList(0, inputPtList)) { return; }
@@ -109,8 +113,9 @@ namespace UrbanX_GH
             if (!DA.GetDataList(2, inputAreaList)) { return; }
             if (!DA.GetDataList(3, inputCentPtList)) { return; }
             
-            if (!DA.GetData(4, ref viewRangeRadius)) { return; }
-            if (!DA.GetData(5, ref viewRangeRadius)) { return; }
+            if (!DA.GetData(4, ref segmentVertical)) { return; }
+            if (!DA.GetData(5, ref segmentHorizontal)) { return; }
+            if (!DA.GetData(6, ref viewRangeRadius)) { return; }
 
 
             ////创建mesh simple，输出中心点与面积
@@ -124,13 +129,23 @@ namespace UrbanX_GH
 
             //计算射线及比例，按照largeList顺序
             //var rayResultDic = MeshCreation.CalcRays(loadedMesh, ptLargeList, 10, 100, 360, 200, 14);
-            var visibleAreaList = MeshCreation.CalcRaysGetArea(simpleMesh, MeshCreation.NTSPtList2Vector3dList(ptLargeList), out Dictionary<int, int> rayResultDic, subdivision, 100, 360, viewRangeRadius, 90);
-            var visibilityPercentage = MeshCreation.CalcVisibilityPercent(visibleAreaList, wholeAreaList);
+            var ptLargeArray = ptLargeList.ToArray();
+            ConcurrentDictionary<int, int> rayResultDic = new ConcurrentDictionary<int, int>();
+            var visibleAreaList = new double[ptLargeArray.Length];
+            var visibilityPercentage = new double[ptLargeArray.Length];
+
+            var spatial=MeshCreation.InitialMeshTree(simpleMesh);
+            
+            System.Threading.Tasks.Parallel.For(0, ptLargeArray.Length, i =>
+            {
+                visibleAreaList[i] = MeshCreation.CalcRaysGetAreaParallel(simpleMesh, spatial, MeshCreation.NTSPt2Vector3d(ptLargeArray[i]), rayResultDic, segmentVertical, segmentHorizontal, 360, viewRangeRadius, 90);
+                visibilityPercentage[i] = MeshCreation.CalcVisibilityPercentParallel(visibleAreaList[i], wholeAreaList[i]);
+            });
 
             //输出内容
             ////初始化颜色
             MeshCreation.InitiateColor(simpleMesh);
-            var meshFromRays = MeshCreation.ApplyColorsBasedOnRays(simpleMesh, rayResultDic, Colorf.Red, Colorf.Black);
+            var meshFromRays = MeshCreation.ApplyColorsBasedOnRays(simpleMesh, rayResultDic,Colorf.Yellow, Colorf.Red);
 
             //输出计算后Mesh
             //var exportPath_Calc = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\097_Geometry3D\测试\export_test.obj";

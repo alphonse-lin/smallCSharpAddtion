@@ -138,27 +138,6 @@
       </outputs>
     </component>
 
-    <!-- 从现有数据读取，建筑曝光率计算-->
-    <component>
-      <id>Urban_Sustainability_ExposureRate</id>
-      <name>Urban_Sustainability_ExposureRate</name>
-      <nickname>U_Sustain_ER</nickname>
-      <description>calculate exposure rate of each side in builidng brep</description>
-      <category>UrbanX</category>
-      <subCategory>Urban_Sustainability</subCategory>
-      <inputs>
-        <input id="0" name="inputBreps" nickname="inBrep" description="input brep list to calculate exposure rate value"/>
-        <input id="1" name="inputPts" nickname="inPts" description="input point list to create rays"/>
-        <input id="2" name="nomalized" nickname="N" description="normalized the exposure rate value"/>
-        <input id="3" name="radius" nickname="R" description="the radius of rays"/>
-        <input id="4" name="segments" nickname="S" description="the segments of rays"/>
-      </inputs>
-      <outputs>
-        <output id="0"  name="outputLines" nickname="L" description="brep outlines in first level"/>
-        <output id="1"  name="outputExposureRates" nickname="ER" description="value for each brep outlines"/>
-      </outputs>
-    </component>
-
     <!-- 从现有数据读取，计算人口数据-->
     <component>
       <id>Urban_Sustainability_CalculatePopulation</id>
@@ -210,12 +189,34 @@
         <input id="1"  name="simpleMesh" nickname="M" description="input simplest mesh"/>
         <input id="2"  name="area" nickname="A" description="input area"/>
         <input id="3"  name="centerPoint" nickname="cenPt" description="input centerPt"/>
-        <input id="4" name="subdivisionInMesh" nickname="sSize" description="subdivision size in mesh"/>
-        <input id="5" name="viewRange" nickname="vRange" description="view range in each pt as radius"/>
+        <input id="4" name="subVertical" nickname="subV" description="the higher, the more accurate of ray intersection, but slower"/>
+        <input id="5" name="subHorizontal" nickname="subH" description="the higher, the more accurate of ray intersection, but slower"/>
+        <input id="6" name="viewRange" nickname="vRange" description="view range in each pt as radius"/>
       </inputs>
       <outputs>
         <output id="0"  name="ColoredMesh" nickname="M" description="output colored mesh"/>
         <output id="1"  name="ratio" nickname="A" description="output ratio of each pt"/>
+      </outputs>
+    </component>
+
+    <!-- 从现有数据读取，建筑曝光率计算-->
+    <component>
+      <id>Urban_Spatial_Analysis_ExposureRate2D</id>
+      <name>Urban_Spatial_Analysis_ExposureRate2D</name>
+      <nickname>U_SA_ER2d</nickname>
+      <description>calculate exposure rate of each side in builidng brep</description>
+      <category>UrbanX</category>
+      <subCategory>Urban_Sustainability</subCategory>
+      <inputs>
+        <input id="0" name="inputBreps" nickname="inBrep" description="input brep list to calculate exposure rate value"/>
+        <input id="1" name="inputPts" nickname="inPts" description="input point list to create rays"/>
+        <input id="2" name="nomalized" nickname="N" description="normalized the exposure rate value"/>
+        <input id="3" name="radius" nickname="R" description="the radius of rays"/>
+        <input id="4" name="segments" nickname="S" description="the segments of rays"/>
+      </inputs>
+      <outputs>
+        <output id="0"  name="outputLines" nickname="L" description="brep outlines in first level"/>
+        <output id="1"  name="outputExposureRates" nickname="ER" description="value for each brep outlines"/>
       </outputs>
     </component>
   </module>

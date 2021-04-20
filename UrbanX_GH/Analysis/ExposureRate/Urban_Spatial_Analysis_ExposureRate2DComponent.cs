@@ -23,7 +23,7 @@ using UrbanX_GH.Properties;
 
 namespace UrbanX_GH
 {
-    public class UrbanX_Sustainability_ExposureRate_Component : GH_Component
+    public class Urban_Spatial_Analysis_ExposureRate2DComponent : GH_Component
     {
         /// <summary>
         /// Each implementation of GH_Component must provide a public 
@@ -33,8 +33,8 @@ namespace UrbanX_GH
         /// new tabs/panels will automatically be created.
         /// </summary>
         public XElement meta;
-        public static string c_id = "Urban_Sustainability_ExposureRate";
-        public static string c_moduleName = "Urban_Sustainability";
+        public static string c_id = "Urban_Spatial_Analysis_ExposureRate2D";
+        public static string c_moduleName = "Urban_Spatial_Analysis";
 
         #region 备用
         //public Urban_SustainabilityComponent()
@@ -45,7 +45,7 @@ namespace UrbanX_GH
         //}
         #endregion
         public override GH_Exposure Exposure => GH_Exposure.primary;
-        public UrbanX_Sustainability_ExposureRate_Component() : base("", "", "", "", "")
+        public Urban_Spatial_Analysis_ExposureRate2DComponent() : base("", "", "", "", "")
         {
             //AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler(SharedUtils.Resolve);
             this.meta = SharedResources_Utils.GetXML(c_moduleName, c_id);

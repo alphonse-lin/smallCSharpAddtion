@@ -8,6 +8,7 @@ using System.IO;
 using NTS = NetTopologySuite;
 using Rh=Rhino.Geometry;
 using System.Drawing;
+using System.Collections.Concurrent;
 
 namespace UrbanX_GH.Application.Geometry
 {
@@ -65,7 +66,7 @@ namespace UrbanX_GH.Application.Geometry
         }
         public static void InitiateColor(DMesh3 mesh)
         {
-            mesh.EnableVertexColors(new Colorf(Colorf.White));
+            mesh.EnableVertexColors(new Colorf(Colorf.LightGrey));
         }
 
         public static DMesh3 ApplyColor(DMesh3 mesh, Colorf originColor, Colorf DestnationColor)
@@ -577,6 +578,63 @@ namespace UrbanX_GH.Application.Geometry
             return hitTriArea;
             //return hitTrianglesDic;
         }
+
+
+        public static DMeshAABBTree3 InitialMeshTree(DMesh3 mesh)
+        {
+            DMesh3 meshIn = new DMesh3(mesh);
+            DMeshAABBTree3 spatial = new DMeshAABBTree3(meshIn);
+            spatial.Build();
+            return spatial;
+        }
+        public static double CalcRaysGetAreaParallel(DMesh3 meshIn, DMeshAABBTree3 spatial, Vector3d origin, ConcurrentDictionary<int, int> hitIndexDic, int segmentHeight = 10, int segment = 10, double angle = 360, double radius = 100, double angleHeight = 90)
+        {
+            var direction = CreateSphereDirection(origin, segmentHeight, segment, angle, radius, angleHeight);
+            var rayArea = 0d;
+            //number of hitted vertex
+            for (int i = 0; i < direction.Length; i++)
+            {
+                Ray3d ray = new Ray3d(origin, direction[i]);
+
+                #region 计算被击中的次数
+                int hit_tid = spatial.FindNearestHitTriangle(ray);
+                if (hit_tid != DMesh3.InvalidID)
+                {
+                    #region 计算射线距离
+                    double hit_dist = -1d;
+                    IntrRay3Triangle3 intr = MeshQueries.TriangleIntersection(meshIn, hit_tid, ray);
+                    hit_dist = origin.Distance(ray.PointAt(intr.RayParameter));
+                    #endregion
+
+                    #region 判定是否在距离内，如果是，加上先前面积
+                    if (hit_dist <= radius)
+                    {
+                        var triArea = meshIn.GetTriArea(hit_tid);
+                        var tempTri = meshIn.GetTriangle(hit_tid);
+                        for (int eachVertex = 0; eachVertex < tempTri.array.Length; eachVertex++)
+                        {
+                            var hit_vid = tempTri[eachVertex];
+                            if (hitIndexDic.ContainsKey(hit_vid))
+                            {
+                                var temp_amount = hitIndexDic[hit_vid];
+                                hitIndexDic[hit_vid] = temp_amount + 1;
+                            }
+                            else
+                            {
+                                hitIndexDic.TryAdd(hit_vid, 1);
+                            }
+                        }
+
+                        rayArea += triArea;
+                    }
+                    #endregion
+                }
+                #endregion
+            };
+
+            return rayArea;
+            //return hitTrianglesDic;
+        }
         /// <summary>
         /// based on origin, create a sphere
         /// </summary>
@@ -591,7 +649,7 @@ namespace UrbanX_GH.Application.Geometry
                 angleHeight = 90;
             if (angle > 360)
                 angle = 360;
-            double _angleHeight = Math.PI * angleHeight / 180 / segment;
+            double _angleHeight = Math.PI * angleHeight / 180 / segmentHeight;
             double _angle = Math.PI * angle / 180 / segment;
 
             Vector3d[] vertices = new Vector3d[(segmentHeight) * (segment)];
@@ -625,6 +683,25 @@ namespace UrbanX_GH.Application.Geometry
             return meshIn;
         }
 
+        public static DMesh3 ApplyColorsBasedOnRays(DMesh3 mesh, ConcurrentDictionary<int, int> hitTrianglesDic, Colorf originColor, Colorf DestnationColor)
+        {
+            DMesh3 meshIn = new DMesh3(mesh);
+            var maxNumber = hitTrianglesDic.Values.Max();
+
+            int i = 0;
+
+            foreach (var item in hitTrianglesDic)
+            {
+                //var scalarValue = item.Value / (float)maxNumber;
+                var scalarValue = (float)Math.Log(item.Value, maxNumber);
+                var tempColor = Colorf.Lerp(originColor, DestnationColor, scalarValue);
+                meshIn.SetVertexColor(item.Key, tempColor);
+                i++;
+            }
+
+            return meshIn;
+        }
+
         public static double[] CalcVisibilityPercent(double[] visibleArea, double[] wholeArea)
         {
             double[] result = new double[visibleArea.Length];
@@ -632,6 +709,13 @@ namespace UrbanX_GH.Application.Geometry
             {
                 result[i] = visibleArea[i] / wholeArea[i];
             }
+            return result;
+        }
+
+
+        public static double CalcVisibilityPercentParallel(double visibleArea, double wholeArea)
+        {
+            var result = visibleArea / wholeArea;
             return result;
         }
         #endregion
@@ -672,37 +756,6 @@ namespace UrbanX_GH.Application.Geometry
         #endregion
 
         #region 005_convert
-        public static DMesh3 ConvertFromRh_Meshes(Rh.Mesh[] meshList, out Dictionary<NTS.Geometries.Point, double> centerPtDic)
-        {
-            Dictionary<NTS.Geometries.Point, double> temp_centerPtDic = new Dictionary<NTS.Geometries.Point, double>();
-            DMesh3 meshCollection = new DMesh3();
-
-            for (int i = 0; i < meshList.Length; i++)
-            {
-                var singleMesh = meshList[i];
-                //求出转换后的DMesh3 
-                DMesh3 tempMesh = ConvertFromRh_Mesh(singleMesh);
-                MeshEditor.Append(meshCollection, tempMesh);
-
-                //求出中点
-                var centerPt = ConvertFromRh_Point(singleMesh.GetBoundingBox(false).Center);
-                //求出面积
-                var tempArea = Rh.AreaMassProperties.Compute(singleMesh).Area;
-
-                if (temp_centerPtDic.ContainsKey(centerPt))
-                {
-                    var tempAreaInDic = temp_centerPtDic[centerPt];
-                    temp_centerPtDic[centerPt] = tempArea + tempAreaInDic;
-                }
-                else
-                    temp_centerPtDic.Add(centerPt, tempArea);
-            }
-
-
-            centerPtDic = temp_centerPtDic;
-            return meshCollection;
-        }
-
         public static Rh.Brep CreateBrepMinusTopBtn(Rh.Brep single, out double size, out Rh.Point3d centPt)
         {
             var faceList = single.Faces;
@@ -753,28 +806,6 @@ namespace UrbanX_GH.Application.Geometry
             return new Vector3d(NTSPt.X, NTSPt.Y, NTSPt.Z);
         }
 
-        public static DMesh3[] ConvertFromRh_Meshes(Rh.Mesh[] meshList)
-        {
-            DMesh3[] result = new DMesh3[meshList.Length];
-            for (int i = 0; i < meshList.Length; i++)
-            {
-                var singleMesh = meshList[i] ;
-                result[i] = ConvertFromRh_Mesh(singleMesh);
-            }
-            return result;
-        }
-
-        public static DMesh3 ConvertFromRh_Mesh(Rh.Mesh[] meshList)
-        {
-            DMesh3 meshCollection = new DMesh3();
-            for (int i = 0; i < meshList.Length; i++)
-            {
-                var singleMesh = meshList[i];
-                MeshEditor.Append(meshCollection, ConvertFromRh_Mesh(singleMesh));
-            }
-            return meshCollection;
-        }
-
         private static NTS.Geometries.Point ConvertFromRh_Point(Rh.Point3d pt)
         {
             return new NTS.Geometries.Point(pt.X, pt.Y, pt.Z);
@@ -794,15 +825,6 @@ namespace UrbanX_GH.Application.Geometry
                 ptResult[i]= new NTS.Geometries.Point(pts.ElementAt(i).X, pts.ElementAt(i).Y, pts.ElementAt(i).Z);
             }
             return ptResult;
-        }
-
-        public static DMesh3 ConvertFromRh_Mesh(Rh.Mesh Rh_mesh)
-        {
-            var Rh_vertex = Rh_mesh.Vertices;
-            var Rh_tri = Rh_mesh.Faces;
-            var Rh_normals = Rh_mesh.Normals;
-
-            return  DMesh3Builder.Build(Rh_vertex, Rh_tri, Rh_normals);
         }
 
         public static Dictionary<NetTopologySuite.Geometries.Point, double> GenerateDic(List<double> areaList, List<Rh.Point3d> ptList)
@@ -840,6 +862,7 @@ namespace UrbanX_GH.Application.Geometry
                 meshOutput.VertexColors.Add(ConvertFromDMeshVector(meshInput.GetVertexColor(i)));
             }
 
+            meshOutput.Faces.ConvertTrianglesToQuads(0.034907, 0.875);
             return meshOutput;
 
         }
@@ -856,7 +879,6 @@ namespace UrbanX_GH.Application.Geometry
             meshOutput.Faces.AddFaces(rhFacesList);
 
             return meshOutput;
-
         }
 
         private static Rh.Point3d[] ConvertFromDMeshVector(Vector3d[] meshVertices)
@@ -881,7 +903,7 @@ namespace UrbanX_GH.Application.Geometry
 
         private static Color ConvertFromDMeshVector(Vector3f vertexColor)
         {
-            var tempColor=hsb2rgb(vertexColor.x, vertexColor.y, vertexColor.z);
+            var tempColor= ConvertColorValueBasedFloat(vertexColor.x, vertexColor.y, vertexColor.z);
             return Color.FromArgb(tempColor[0], tempColor[1], tempColor[2]);
         }
 
@@ -930,6 +952,15 @@ namespace UrbanX_GH.Application.Geometry
             }
             return new int[] { (int) (r * 255.0), (int) (g * 255.0),
             (int) (b * 255.0) };
+        }
+
+        private static int[] ConvertColorValueBasedFloat(float r, float g, float b)
+        {
+            int[] colorResult = new int[3];
+            colorResult[0]= Math.Max(0, Math.Min(255, (int)Math.Floor(r * 256.0)));
+            colorResult[1]= Math.Max(0, Math.Min(255, (int)Math.Floor(g * 256.0)));
+            colorResult[2]= Math.Max(0, Math.Min(255, (int)Math.Floor(b * 256.0)));
+            return colorResult;
         }
         #endregion
     }
