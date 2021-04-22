@@ -77,8 +77,6 @@ namespace UrbanX_GH
             this.meta = SharedResources_Utils.GetXML(c_moduleName, c_id);
             List<XElement> list = this.meta.Element("outputs").Elements("output").ToList<XElement>();
             pManager.AddGenericParameter((string)list[0].Attribute("name"), (string)list[0].Attribute("nickname"), (string)list[0].Attribute("description"), GH_ParamAccess.item);
-            pManager.AddGenericParameter((string)list[1].Attribute("name"), (string)list[1].Attribute("nickname"), (string)list[1].Attribute("description"), GH_ParamAccess.list);
-            pManager.AddGenericParameter((string)list[2].Attribute("name"), (string)list[2].Attribute("nickname"), (string)list[2].Attribute("description"), GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -95,40 +93,35 @@ namespace UrbanX_GH
 
             #region 细分mesh
             Brep[] brepIn = brepInList.ToArray();
-            var meshOut = new Mesh[brepIn.Length];
+            var topBtnMeshArray = new Mesh[brepIn.Length];
+            var sideMeshArray = new Mesh[brepIn.Length];
             var sizeList = new double[brepIn.Length];
             var cenPtList = new Point3d[brepIn.Length];
-            
+
+            var mp = MeshingParameters.Default;
+            mp.MaximumEdgeLength = gridSize;
+            mp.MinimumEdgeLength = gridSize;
+            mp.GridAspectRatio = 1;
+
             System.Threading.Tasks.Parallel.For(0, brepIn.Length, i =>
             {
-                //To Do 增加顶面、底面
-                var singleBrep = MeshCreation.CreateBrepMinusTopBtn(brepIn[i], out double size, out Point3d cenPt);
-                if (gridSize == -1)
-                    gridSize = RhinoToolManager.GetMaxBounds(brepIn[i])/3;
-                
-                var mp = MeshingParameters.Default;
-                mp.MaximumEdgeLength = gridSize;
-                mp.MinimumEdgeLength = gridSize;
-                mp.GridAspectRatio = 1;
+                MeshCreation.CreateBrepMinusTopBtn(brepIn[i], mp, out Mesh resulTopBtn, out Mesh resultSides, out double size, out Point3d cenPt);
 
-                var tempMeshArray=Mesh.CreateFromBrep(singleBrep, mp);
-                var singleMesh = new Mesh();
-                singleMesh.Append(tempMeshArray);
-                singleMesh.Faces.ConvertQuadsToTriangles();
-                meshOut[i]=(singleMesh);
+                topBtnMeshArray[i] = resulTopBtn;
+                sideMeshArray[i]=resultSides;
                 sizeList[i] = size;
                 cenPtList[i] = cenPt;
             });
 
-            //创建mesh simple，输出中心点与面积
-            var simpleMesh = new DMesh3(RhinoToolManager.ConvertFromRhMesh(meshOut),true);
+
+            //创建meshClass，包含topBtn, Sides, Area, CentPt
+            var topBtnMesh = RhinoToolManager.JoinedMesh(topBtnMeshArray);
+            var sideMesh = new DMesh3(RhinoToolManager.ConvertFromRhMesh(sideMeshArray),true);
+            GeneratedMeshClass result = new GeneratedMeshClass(topBtnMesh, sideMesh, sizeList, cenPtList);
             #endregion
 
             #region 输出内容
-            DA.SetData(0, simpleMesh);
-            DA.SetDataList(1, sizeList);
-            DA.SetDataList(2, cenPtList);
-
+            DA.SetData(0, result);
             #endregion
         }
 

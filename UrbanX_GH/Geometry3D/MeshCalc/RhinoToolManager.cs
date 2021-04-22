@@ -18,6 +18,29 @@ namespace UrbanX_GH.Application.Geometry
             return ptMax.DistanceTo(ptMin);
         }
 
+        public static Rh.Mesh JoinedMesh(IEnumerable<Rh.Mesh> meshInput)
+        {
+            var tempMesh = new Rh.Mesh();
+            var count = meshInput.Count();
+            var vertexCount = 0;
+
+            for (int i = 0; i < count; i++)
+            {
+                var temp = meshInput.ElementAt(i);
+                tempMesh.Append(temp);
+                vertexCount += temp.Vertices.Count;
+            }
+
+            IEnumerable<System.Drawing.Color> colorList = Enumerable.Repeat(System.Drawing.Color.LightGray, vertexCount);
+
+            tempMesh.VertexColors.AppendColors(colorList.ToArray());
+            return tempMesh;
+        }
+
+        public static void JoinedMeshParallel(Rh.Mesh origin, Rh.Mesh meshInput)
+        {
+            origin.Append(meshInput);
+        }
         public static DMesh3 ConvertFromRhMesh(IEnumerable<Rh.Mesh> meshInput)
         {
             var tempMesh = new Rh.Mesh();
@@ -27,10 +50,19 @@ namespace UrbanX_GH.Application.Geometry
             }
 
             var meshVertices = ConvertFromRhPt(tempMesh.Vertices.ToPoint3fArray());
-            var meshNormals = ConvertFromRhPt(tempMesh.Normals.ToFloatArray());
+            var meshNormals = ConvertFromRhPt_float(tempMesh.Normals.ToFloatArray());
             var meshFaces = ConvertFromRhinoMeshFace(tempMesh.Faces);
             DMesh3 meshOut = DMesh3Builder.Build(meshVertices, meshFaces, meshNormals);
             return meshOut;
+        }
+
+        public static void ConvertFromRhMeshParallel(DMesh3 origin, Rh.Mesh meshInput)
+        {
+            Vector3d[] meshVertices = ConvertFromRhPt(meshInput.Vertices.ToPoint3dArray());
+            Vector3d[] meshNormals = ConvertFromRhPt_double(meshInput.Normals.ToFloatArray());
+            var meshFaces = ConvertFromRhinoMeshFace(meshInput.Faces);
+            DMesh3 meshOut = DMesh3Builder.Build(meshVertices, meshFaces, meshNormals);
+            MeshEditor.Append(origin, meshOut);
         }
 
         private static Vector3f[] ConvertFromRhPt(Rh.Point3f[] ptArray)
@@ -43,7 +75,7 @@ namespace UrbanX_GH.Application.Geometry
             return vectorResult;
         }
 
-        private static Vector3f[] ConvertFromRhPt(float[] floatArray)
+        private static Vector3f[] ConvertFromRhPt_float(float[] floatArray)
         {
             var vectorResult = new Vector3f[floatArray.Count()/3];
             for (int i = 0; i < vectorResult.Length; i++)
@@ -51,6 +83,28 @@ namespace UrbanX_GH.Application.Geometry
                 vectorResult[i].x = floatArray[i*3];
                 vectorResult[i].y = floatArray[i*3+1];
                 vectorResult[i].z = floatArray[i*3+2];
+            }
+            return vectorResult;
+        }
+
+        private static Vector3d[] ConvertFromRhPt(Rh.Point3d[] ptArray)
+        {
+            var vectorResult = new Vector3d[ptArray.Length];
+            for (int i = 0; i < ptArray.Length; i++)
+            {
+                vectorResult[i] = new Vector3d(ptArray[i].X, ptArray[i].Y, ptArray[i].Z);
+            }
+            return vectorResult;
+        }
+
+        private static Vector3d[] ConvertFromRhPt_double(float[] floatArray)
+        {
+            var vectorResult = new Vector3d[floatArray.Count() / 3];
+            for (int i = 0; i < vectorResult.Length; i++)
+            {
+                vectorResult[i].x = floatArray[i * 3];
+                vectorResult[i].y = floatArray[i * 3 + 1];
+                vectorResult[i].z = floatArray[i * 3 + 2];
             }
             return vectorResult;
         }

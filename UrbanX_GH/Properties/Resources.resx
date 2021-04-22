@@ -294,9 +294,7 @@
         &lt;input id="1" name="subdivisionSize" nickname="subSize" description="default is -1, system would auto-generate simplest geometry"/&gt;
       &lt;/inputs&gt;
       &lt;outputs&gt;
-        &lt;output id="0"  name="simpleMesh" nickname="M" description="output simplest mesh"/&gt;
-        &lt;output id="1"  name="area" nickname="A" description="output area"/&gt;
-        &lt;output id="2"  name="centerPoint" nickname="cenPt" description="output centerPt"/&gt;
+        &lt;output id="0"  name="generatedMeshClass" nickname="GMClass" description="output mesh class, contained topBtn mesh, side mesh, sidemesh area, mesh center point"/&gt;
       &lt;/outputs&gt;
     &lt;/component&gt;
 
@@ -310,16 +308,15 @@
       &lt;subCategory&gt;Urban_Spatial&lt;/subCategory&gt;
       &lt;inputs&gt;
         &lt;input id="0"  name="viewPt" nickname="vPt" description="view pts in the context"/&gt;
-        &lt;input id="1"  name="simpleMesh" nickname="M" description="input simplest mesh"/&gt;
-        &lt;input id="2"  name="area" nickname="A" description="input area"/&gt;
-        &lt;input id="3"  name="centerPoint" nickname="cenPt" description="input centerPt"/&gt;
-        &lt;input id="4" name="subVertical" nickname="subV" description="the higher, the more accurate of ray intersection, but slower"/&gt;
-        &lt;input id="5" name="subHorizontal" nickname="subH" description="the higher, the more accurate of ray intersection, but slower"/&gt;
-        &lt;input id="6" name="viewRange" nickname="vRange" description="view range in each pt as radius"/&gt;
+        &lt;input id="1"  name="generatedMeshClass" nickname="GMClass" description="input generated mesh class"/&gt;
+        &lt;input id="2" name="subVertical" nickname="subV" description="the higher, the more accurate of ray intersection, but slower"/&gt;
+        &lt;input id="3" name="subHorizontal" nickname="subH" description="the higher, the more accurate of ray intersection, but slower"/&gt;
+        &lt;input id="4" name="viewRange" nickname="vRange" description="view range in each pt as radius"/&gt;
       &lt;/inputs&gt;
       &lt;outputs&gt;
-        &lt;output id="0"  name="ColoredMesh" nickname="M" description="output colored mesh"/&gt;
-        &lt;output id="1"  name="ratio" nickname="A" description="output ratio of each pt"/&gt;
+        &lt;output id="0"  name="ColoredSidesMesh" nickname="M" description="output colored sides mesh"/&gt;
+        &lt;output id="1"  name="ColoredTopBtnMesh" nickname="TBM" description="output colored topBtn mesh"/&gt;
+        &lt;output id="2"  name="ratio" nickname="A" description="output ratio of each pt"/&gt;
       &lt;/outputs&gt;
     &lt;/component&gt;
 

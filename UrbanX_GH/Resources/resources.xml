@@ -170,9 +170,7 @@
         <input id="1" name="subdivisionSize" nickname="subSize" description="default is -1, system would auto-generate simplest geometry"/>
       </inputs>
       <outputs>
-        <output id="0"  name="simpleMesh" nickname="M" description="output simplest mesh"/>
-        <output id="1"  name="area" nickname="A" description="output area"/>
-        <output id="2"  name="centerPoint" nickname="cenPt" description="output centerPt"/>
+        <output id="0"  name="generatedMeshClass" nickname="GMClass" description="output mesh class, contained topBtn mesh, side mesh, sidemesh area, mesh center point"/>
       </outputs>
     </component>
 
@@ -186,16 +184,15 @@
       <subCategory>Urban_Spatial</subCategory>
       <inputs>
         <input id="0"  name="viewPt" nickname="vPt" description="view pts in the context"/>
-        <input id="1"  name="simpleMesh" nickname="M" description="input simplest mesh"/>
-        <input id="2"  name="area" nickname="A" description="input area"/>
-        <input id="3"  name="centerPoint" nickname="cenPt" description="input centerPt"/>
-        <input id="4" name="subVertical" nickname="subV" description="the higher, the more accurate of ray intersection, but slower"/>
-        <input id="5" name="subHorizontal" nickname="subH" description="the higher, the more accurate of ray intersection, but slower"/>
-        <input id="6" name="viewRange" nickname="vRange" description="view range in each pt as radius"/>
+        <input id="1"  name="generatedMeshClass" nickname="GMClass" description="input generated mesh class"/>
+        <input id="2" name="subVertical" nickname="subV" description="the higher, the more accurate of ray intersection, but slower"/>
+        <input id="3" name="subHorizontal" nickname="subH" description="the higher, the more accurate of ray intersection, but slower"/>
+        <input id="4" name="viewRange" nickname="vRange" description="view range in each pt as radius"/>
       </inputs>
       <outputs>
-        <output id="0"  name="ColoredMesh" nickname="M" description="output colored mesh"/>
-        <output id="1"  name="ratio" nickname="A" description="output ratio of each pt"/>
+        <output id="0"  name="ColoredSidesMesh" nickname="M" description="output colored sides mesh"/>
+        <output id="1"  name="ColoredTopBtnMesh" nickname="TBM" description="output colored topBtn mesh"/>
+        <output id="2"  name="ratio" nickname="A" description="output ratio of each pt"/>
       </outputs>
     </component>
 

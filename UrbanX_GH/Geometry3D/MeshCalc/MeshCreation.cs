@@ -20,6 +20,7 @@ namespace UrbanX_GH.Application.Geometry
     }
     public class MeshCreation
     {
+        private const double tolerance= 0.0001;
 
         #region 000_Basic Function
         public static void ExportMeshAsObj(string path, DMesh3 mesh, bool color = false)
@@ -64,9 +65,9 @@ namespace UrbanX_GH.Application.Geometry
         {
             return StandardMeshReader.ReadMesh(path);
         }
-        public static void InitiateColor(DMesh3 mesh)
+        public static void InitiateColor(DMesh3 mesh, Colorf color)
         {
-            mesh.EnableVertexColors(new Colorf(Colorf.LightGrey));
+            mesh.EnableVertexColors(new Colorf(color));
         }
 
         public static DMesh3 ApplyColor(DMesh3 mesh, Colorf originColor, Colorf DestnationColor)
@@ -686,17 +687,25 @@ namespace UrbanX_GH.Application.Geometry
         public static DMesh3 ApplyColorsBasedOnRays(DMesh3 mesh, ConcurrentDictionary<int, int> hitTrianglesDic, Colorf originColor, Colorf DestnationColor)
         {
             DMesh3 meshIn = new DMesh3(mesh);
-            var maxNumber = hitTrianglesDic.Values.Max();
-
-            int i = 0;
-
-            foreach (var item in hitTrianglesDic)
+            try
             {
-                //var scalarValue = item.Value / (float)maxNumber;
-                var scalarValue = (float)Math.Log(item.Value, maxNumber);
-                var tempColor = Colorf.Lerp(originColor, DestnationColor, scalarValue);
-                meshIn.SetVertexColor(item.Key, tempColor);
-                i++;
+                var maxNumber = hitTrianglesDic.Values.Max();
+
+                int i = 0;
+
+                foreach (var item in hitTrianglesDic)
+                {
+                    //var scalarValue = item.Value / (float)maxNumber;
+                    var scalarValue = (float)Math.Log(item.Value, maxNumber);
+                    var tempColor = Colorf.Lerp(originColor, DestnationColor, scalarValue);
+                    meshIn.SetVertexColor(item.Key, tempColor);
+                    i++;
+                }
+
+            }
+            catch
+            {
+                throw new MyException("there is no intersection between brep and view point");
             }
 
             return meshIn;
@@ -756,7 +765,7 @@ namespace UrbanX_GH.Application.Geometry
         #endregion
 
         #region 005_convert
-        public static Rh.Brep CreateBrepMinusTopBtn(Rh.Brep single, out double size, out Rh.Point3d centPt)
+        public static void CreateBrepMinusTopBtn(Rh.Brep single, Rh.MeshingParameters mp, out Rh.Mesh resultTopBtn, out Rh.Mesh resultSides, out double size, out Rh.Point3d centPt)
         {
             var faceList = single.Faces;
             var heightList = new List<double>(faceList.Count);
@@ -770,9 +779,23 @@ namespace UrbanX_GH.Application.Geometry
             }
             var max = heightList.Max();
             var min = heightList.Min();
-            indexList.Remove(heightList.IndexOf(max));
-            indexList.Remove(heightList.IndexOf(min));
+            var indexMax = heightList.IndexOf(max);
+            var indexMin = heightList.IndexOf(min);
+            indexList.Remove(indexMax);
+            indexList.Remove(indexMin);
 
+            //输出 四角面top btn
+            Rh.Mesh topBtnMesh = new Rh.Mesh();
+            var topMesh = single.Faces[indexMax];
+            topMesh.ShrinkFace(Rh.BrepFace.ShrinkDisableSide.ShrinkAllSides);
+            var btnMesh = single.Faces[indexMin];
+            btnMesh.ShrinkFace(Rh.BrepFace.ShrinkDisableSide.ShrinkAllSides);
+
+            topBtnMesh.Append(Rh.Mesh.CreateFromSurface(topMesh,mp));
+            topBtnMesh.Append(Rh.Mesh.CreateFromSurface(btnMesh, mp)); 
+            resultTopBtn = topBtnMesh;
+
+            //输出 三角面side
             Rh.Brep result = new Rh.Brep();
             var sumArea = 0d;
             for (int k = 0; k < indexList.Count; k++) { 
@@ -781,11 +804,17 @@ namespace UrbanX_GH.Application.Geometry
                 result.Append(tempBrep);
             }
 
-            
-            centPt = single.GetBoundingBox(false).Center;
-            size = sumArea;
+            var tempMeshArray = Rh.Mesh.CreateFromBrep(result, mp);
+            var sideMesh = new Rh.Mesh();
+            sideMesh.Append(tempMeshArray);
+            sideMesh.Faces.ConvertQuadsToTriangles();
+            resultSides = sideMesh;
 
-            return result;
+            //输出中心点
+            centPt = single.GetBoundingBox(false).Center;
+            
+            //输出面积
+            size = sumArea;
         }
 
         public static List<Vector3d> NTSPtList2Vector3dList(IEnumerable<NTS.Geometries.Point> ptList)
@@ -827,10 +856,10 @@ namespace UrbanX_GH.Application.Geometry
             return ptResult;
         }
 
-        public static Dictionary<NetTopologySuite.Geometries.Point, double> GenerateDic(List<double> areaList, List<Rh.Point3d> ptList)
+        public static Dictionary<NetTopologySuite.Geometries.Point, double> GenerateDic(double[] areaList, Rh.Point3d[] ptList)
         {
             Dictionary<NetTopologySuite.Geometries.Point, double> ptDic = new Dictionary<NTS.Geometries.Point, double>();
-            for (int i = 0; i < areaList.Count; i++)
+            for (int i = 0; i < areaList.Length; i++)
             {
                 var pt2d = ConvertFromRh_Point2D(ptList[i]);
                 if (ptDic.ContainsKey(pt2d))
@@ -859,7 +888,7 @@ namespace UrbanX_GH.Application.Geometry
 
             for (int i = 0; i < tempMeshInputVertices.Length; i++)
             {
-                meshOutput.VertexColors.Add(ConvertFromDMeshVector(meshInput.GetVertexColor(i)));
+                meshOutput.VertexColors.Add(ConvertFromDMeshColor(meshInput.GetVertexColor(i)));
             }
 
             meshOutput.Faces.ConvertTrianglesToQuads(0.034907, 0.875);
@@ -901,12 +930,17 @@ namespace UrbanX_GH.Application.Geometry
             return meshResult;
         }
 
-        private static Color ConvertFromDMeshVector(Vector3f vertexColor)
+        public static Color ConvertFromDMeshColor(Vector3f vertexColor)
         {
             var tempColor= ConvertColorValueBasedFloat(vertexColor.x, vertexColor.y, vertexColor.z);
             return Color.FromArgb(tempColor[0], tempColor[1], tempColor[2]);
         }
 
+        public static Color ConvertFromDMeshColor(Colorf colorf)
+        {
+            var tempColor = ConvertColorValueBasedFloat(colorf.r, colorf.g, colorf.b);
+            return Color.FromArgb(tempColor[0], tempColor[1], tempColor[2]);
+        }
         private static int[] hsb2rgb(float h, float s, float v)
         {
             float r = 0, g = 0, b = 0;
@@ -962,6 +996,36 @@ namespace UrbanX_GH.Application.Geometry
             colorResult[2]= Math.Max(0, Math.Min(255, (int)Math.Floor(b * 256.0)));
             return colorResult;
         }
+
+        class MyException : Exception
+        {
+            public MyException(string message) : base(message)
+            {
+            }
+        }
         #endregion
     }
+
+    public class GeneratedMeshClass
+    {
+        public Rh.Mesh topBtnList { get; set; }
+        public DMesh3 sideList { get; set; }
+
+        public double[] sideAreaList { get; set; }
+        public Rh.Point3d[] cenPtList { get; set; }
+
+        public GeneratedMeshClass(Rh.Mesh TopBtnList, DMesh3 SideList, double[] SideAreaList, Rh.Point3d[] CenPtList)
+        {
+            topBtnList = TopBtnList;
+            sideList = SideList;
+            sideAreaList = SideAreaList;
+            cenPtList = CenPtList;
+        }
+
+        public GeneratedMeshClass() { }
+    }
+
+
+
+
 }

@@ -71,14 +71,12 @@ namespace UrbanX_GH
             List<XElement> list = this.meta.Element("inputs").Elements("input").ToList<XElement>();
             pManager.AddPointParameter((string)list[0].Attribute("name"), (string)list[0].Attribute("nickname"), (string)list[0].Attribute("description"), GH_ParamAccess.list);
             pManager.AddGenericParameter((string)list[1].Attribute("name"), (string)list[1].Attribute("nickname"), (string)list[1].Attribute("description"), GH_ParamAccess.item);
-            pManager.AddNumberParameter((string)list[2].Attribute("name"), (string)list[2].Attribute("nickname"), (string)list[2].Attribute("description"), GH_ParamAccess.list);
-            pManager.AddPointParameter((string)list[3].Attribute("name"), (string)list[3].Attribute("nickname"), (string)list[3].Attribute("description"), GH_ParamAccess.list);
-            pManager.AddIntegerParameter((string)list[4].Attribute("name"), (string)list[4].Attribute("nickname"), (string)list[4].Attribute("description"), GH_ParamAccess.item,10);
-            pManager.AddIntegerParameter((string)list[5].Attribute("name"), (string)list[5].Attribute("nickname"), (string)list[5].Attribute("description"), GH_ParamAccess.item,100);
-            pManager.AddNumberParameter((string)list[6].Attribute("name"), (string)list[6].Attribute("nickname"), (string)list[6].Attribute("description"), GH_ParamAccess.item,300.0);
+            pManager.AddIntegerParameter((string)list[2].Attribute("name"), (string)list[2].Attribute("nickname"), (string)list[2].Attribute("description"), GH_ParamAccess.item,10);
+            pManager.AddIntegerParameter((string)list[3].Attribute("name"), (string)list[3].Attribute("nickname"), (string)list[3].Attribute("description"), GH_ParamAccess.item,100);
+            pManager.AddNumberParameter((string)list[4].Attribute("name"), (string)list[4].Attribute("nickname"), (string)list[4].Attribute("description"), GH_ParamAccess.item,300.0);
+            pManager[2].Optional = false;
+            pManager[3].Optional = false;
             pManager[4].Optional = false;
-            pManager[5].Optional = false;
-            pManager[6].Optional = false;
         }
 
         /// <summary>
@@ -90,7 +88,8 @@ namespace UrbanX_GH
             this.meta = SharedResources_Utils.GetXML(c_moduleName, c_id);
             List<XElement> list = this.meta.Element("outputs").Elements("output").ToList<XElement>();
             pManager.AddGenericParameter((string)list[0].Attribute("name"), (string)list[0].Attribute("nickname"), (string)list[0].Attribute("description"), GH_ParamAccess.item);
-            pManager.AddGenericParameter((string)list[1].Attribute("name"), (string)list[1].Attribute("nickname"), (string)list[1].Attribute("description"), GH_ParamAccess.list);
+            pManager.AddGenericParameter((string)list[1].Attribute("name"), (string)list[1].Attribute("nickname"), (string)list[1].Attribute("description"), GH_ParamAccess.item);
+            pManager.AddGenericParameter((string)list[2].Attribute("name"), (string)list[2].Attribute("nickname"), (string)list[2].Attribute("description"), GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -101,22 +100,26 @@ namespace UrbanX_GH
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             List<Rh.Point3d> inputPtList = new List<Rh.Point3d>();
-            DMesh3 simpleMesh = new DMesh3();
-            List<double> inputAreaList = new List<double>();
-            List<Rh.Point3d> inputCentPtList = new List<Rh.Point3d>();
+            GeneratedMeshClass inputGMClass = new GeneratedMeshClass();
+
+            Rh.Mesh topBtnMesh = new Rh.Mesh();
+            DMesh3 sidesMesh = new DMesh3();
             int segmentVertical = 10;
             int segmentHorizontal = 100;
             double viewRangeRadius = 300d;
+            Colorf basedColor = Colorf.LightGrey;
 
             if (!DA.GetDataList(0, inputPtList)) { return; }
-            if (!DA.GetData(1, ref simpleMesh)) { return; }
-            if (!DA.GetDataList(2, inputAreaList)) { return; }
-            if (!DA.GetDataList(3, inputCentPtList)) { return; }
+            if (!DA.GetData(1, ref inputGMClass)) { return; }
             
-            if (!DA.GetData(4, ref segmentVertical)) { return; }
-            if (!DA.GetData(5, ref segmentHorizontal)) { return; }
-            if (!DA.GetData(6, ref viewRangeRadius)) { return; }
+            if (!DA.GetData(2, ref segmentVertical)) { return; }
+            if (!DA.GetData(3, ref segmentHorizontal)) { return; }
+            if (!DA.GetData(4, ref viewRangeRadius)) { return; }
 
+            topBtnMesh = inputGMClass.topBtnList;
+            sidesMesh = inputGMClass.sideList;
+            double[] inputAreaList = inputGMClass.sideAreaList;
+            Rh.Point3d[] inputCentPtList = inputGMClass.cenPtList;
 
             ////创建mesh simple，输出中心点与面积
             //var simpleMesh=RhinoToolManager.ConvertFromRhMesh(inputMeshList);
@@ -134,26 +137,27 @@ namespace UrbanX_GH
             var visibleAreaList = new double[ptLargeArray.Length];
             var visibilityPercentage = new double[ptLargeArray.Length];
 
-            var spatial=MeshCreation.InitialMeshTree(simpleMesh);
+            var spatial=MeshCreation.InitialMeshTree(sidesMesh);
             
             System.Threading.Tasks.Parallel.For(0, ptLargeArray.Length, i =>
             {
-                visibleAreaList[i] = MeshCreation.CalcRaysGetAreaParallel(simpleMesh, spatial, MeshCreation.NTSPt2Vector3d(ptLargeArray[i]), rayResultDic, segmentVertical, segmentHorizontal, 360, viewRangeRadius, 90);
+                visibleAreaList[i] = MeshCreation.CalcRaysGetAreaParallel(sidesMesh, spatial, MeshCreation.NTSPt2Vector3d(ptLargeArray[i]), rayResultDic, segmentVertical, segmentHorizontal, 360, viewRangeRadius, 90);
                 visibilityPercentage[i] = MeshCreation.CalcVisibilityPercentParallel(visibleAreaList[i], wholeAreaList[i]);
             });
 
             //输出内容
             ////初始化颜色
-            MeshCreation.InitiateColor(simpleMesh);
-            var meshFromRays = MeshCreation.ApplyColorsBasedOnRays(simpleMesh, rayResultDic,Colorf.Yellow, Colorf.Red);
+            MeshCreation.InitiateColor(sidesMesh, basedColor);
+            var meshFromRays = MeshCreation.ApplyColorsBasedOnRays(sidesMesh, rayResultDic,Colorf.Yellow, Colorf.Red);
 
             //输出计算后Mesh
             //var exportPath_Calc = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\097_Geometry3D\测试\export_test.obj";
             //MeshCreation.ExportMeshAsObj(exportPath_Calc, meshFromRays, true);
-            var rhMesh =MeshCreation.ConvertFromDMesh3(meshFromRays);
+            var rhSidesMesh =MeshCreation.ConvertFromDMesh3(meshFromRays);
 
-            DA.SetData(0, rhMesh);
-            DA.SetDataList(1, visibilityPercentage.ToList());
+            DA.SetData(0, rhSidesMesh);
+            DA.SetData(1, topBtnMesh);
+            DA.SetDataList(2, visibilityPercentage.ToList());
         }
 
         /// <summary>
