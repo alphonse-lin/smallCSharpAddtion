@@ -72,11 +72,13 @@ namespace UrbanX_GH
             pManager.AddPointParameter((string)list[0].Attribute("name"), (string)list[0].Attribute("nickname"), (string)list[0].Attribute("description"), GH_ParamAccess.list);
             pManager.AddGenericParameter((string)list[1].Attribute("name"), (string)list[1].Attribute("nickname"), (string)list[1].Attribute("description"), GH_ParamAccess.item);
             pManager.AddIntegerParameter((string)list[2].Attribute("name"), (string)list[2].Attribute("nickname"), (string)list[2].Attribute("description"), GH_ParamAccess.item,10);
-            pManager.AddIntegerParameter((string)list[3].Attribute("name"), (string)list[3].Attribute("nickname"), (string)list[3].Attribute("description"), GH_ParamAccess.item,100);
-            pManager.AddNumberParameter((string)list[4].Attribute("name"), (string)list[4].Attribute("nickname"), (string)list[4].Attribute("description"), GH_ParamAccess.item,300.0);
+            pManager.AddIntegerParameter((string)list[3].Attribute("name"), (string)list[3].Attribute("nickname"), (string)list[3].Attribute("description"), GH_ParamAccess.item,400);
+            pManager.AddNumberParameter((string)list[4].Attribute("name"), (string)list[4].Attribute("nickname"), (string)list[4].Attribute("description"), GH_ParamAccess.item,200.0);
+            pManager.AddNumberParameter((string)list[5].Attribute("name"), (string)list[5].Attribute("nickname"), (string)list[5].Attribute("description"), GH_ParamAccess.item,45.0);
             pManager[2].Optional = false;
             pManager[3].Optional = false;
             pManager[4].Optional = false;
+            pManager[5].Optional = false;
         }
 
         /// <summary>
@@ -105,8 +107,9 @@ namespace UrbanX_GH
             Rh.Mesh topBtnMesh = new Rh.Mesh();
             DMesh3 sidesMesh = new DMesh3();
             int segmentVertical = 10;
-            int segmentHorizontal = 100;
-            double viewRangeRadius = 300d;
+            int segmentHorizontal = 40;
+            double viewRangeRadius = 200d;
+            double viewAngleHeight = 45d;
             Colorf basedColor = Colorf.LightGrey;
 
             if (!DA.GetDataList(0, inputPtList)) { return; }
@@ -115,6 +118,7 @@ namespace UrbanX_GH
             if (!DA.GetData(2, ref segmentVertical)) { return; }
             if (!DA.GetData(3, ref segmentHorizontal)) { return; }
             if (!DA.GetData(4, ref viewRangeRadius)) { return; }
+            if (!DA.GetData(5, ref viewAngleHeight)) { return; }
 
             topBtnMesh = inputGMClass.topBtnList;
             sidesMesh = inputGMClass.sideList;
@@ -141,7 +145,7 @@ namespace UrbanX_GH
             
             System.Threading.Tasks.Parallel.For(0, ptLargeArray.Length, i =>
             {
-                visibleAreaList[i] = MeshCreation.CalcRaysGetAreaParallel(sidesMesh, spatial, MeshCreation.NTSPt2Vector3d(ptLargeArray[i]), rayResultDic, segmentVertical, segmentHorizontal, 360, viewRangeRadius, 90);
+                visibleAreaList[i] = MeshCreation.CalcRaysGetAreaParallel(sidesMesh, spatial, MeshCreation.NTSPt2Vector3d(ptLargeArray[i]), rayResultDic, segmentVertical, segmentHorizontal, 360, viewRangeRadius, viewAngleHeight);
                 visibilityPercentage[i] = MeshCreation.CalcVisibilityPercentParallel(visibleAreaList[i], wholeAreaList[i]);
             });
 

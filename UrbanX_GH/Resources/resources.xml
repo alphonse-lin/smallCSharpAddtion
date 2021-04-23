@@ -188,6 +188,7 @@
         <input id="2" name="subVertical" nickname="subV" description="the higher, the more accurate of ray intersection, but slower"/>
         <input id="3" name="subHorizontal" nickname="subH" description="the higher, the more accurate of ray intersection, but slower"/>
         <input id="4" name="viewRange" nickname="vRange" description="view range in each pt as radius"/>
+        <input id="5" name="viewAngle" nickname="vA" description="the view angle of selected points"/>
       </inputs>
       <outputs>
         <output id="0"  name="ColoredSidesMesh" nickname="M" description="output colored sides mesh"/>

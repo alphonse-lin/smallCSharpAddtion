@@ -469,12 +469,12 @@ namespace UrbanX.Application
             #endregion
 
             #region 计算行道树CO2吸收量
-            //string connectionString = "Host=39.107.177.223;Username=postgres;Password=admin;Database=urbanxlab_db";
-            //string treeName = "毛白杨";
-            //var DBH = new List<double>() { 6d, 12d };
+            string connectionString = "Host=39.107.177.223;Username=postgres;Password=admin;Database=urbanxlab_db";
+            string treeName = "毛白杨";
+            var DBH = new List<double>() { 6d, 12d };
 
-            //var calc = new TreeCO2_calculation(connectionString, treeName, DBH);
-            //Console.WriteLine("树木体积为{0}m³, Biomass为{2}kg, 总吸收二氧化碳量为{2}kg", calc.totalVolume, calc.totalDWB, calc.totalCO2);
+            var calc = new TreeCO2_calculation(connectionString, treeName, DBH);
+            Console.WriteLine("树木体积为{0}m³, Biomass为{2}kg, 总吸收二氧化碳量为{2}kg", calc.totalVolume, calc.totalDWB, calc.totalCO2);
             #endregion
 
             #region 测试自动生成ppt
