@@ -133,6 +133,34 @@ namespace UrbanX.Application.Geometry
             return secPtListCollection;
         }
 
+        public static List<List<NTSGeometry.Point>> ContainsInPtsParallel(NTSGeometry.Point[] mainPtList, NTSGeometry.Point[] secPtList, double radius = 300)
+        {
+            NTS.Index.Quadtree.Quadtree<NTSGeometry.Point> quadTree = new NTS.Index.Quadtree.Quadtree<NTSGeometry.Point>();
+            for (int i = 0; i < secPtList.Length; i++)
+                quadTree.Insert(secPtList[i].EnvelopeInternal, secPtList[i]);
+
+            List<List<NTSGeometry.Point>> secPtListCollection = new List<List<NTSGeometry.Point>>(mainPtList.Length);
+            for (int i = 0; i < mainPtList.Length; i++)
+            {
+                var mainCoor = new Coordinate(mainPtList[i].X, mainPtList[i].Y);
+                var tempEnv = CreateEnvelopeFromPt(mainPtList[i], radius);
+                var secPtListQuery = quadTree.Query(tempEnv);
+
+                List<NTSGeometry.Point> secPtContain = new List<NTSGeometry.Point>();
+                for (int j = 0; j < secPtListQuery.Count; j++)
+                {
+                    var secPt = secPtListQuery[j];
+
+                    Coordinate secCoor = new Coordinate(secPt.X, secPt.Y);
+                    double dis = mainCoor.Distance(secCoor);
+                    if (dis < radius)
+                        secPtContain.Add(secPt);
+                }
+                secPtListCollection.Add(secPtContain);
+            }
+            return secPtListCollection;
+        }
+
         //TODO 划分点，输出mainPtList
         //public static NTSGeometry.Point[] DividePolyline()
         //{
