@@ -794,12 +794,12 @@ namespace UrbanX.Application
             #endregion
 
             #region 006_计算射线_从三角面出发_多线程
-            var jsonFilePath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\building_center02.geojson";
+            var jsonFilePath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\building_center01.geojson";
             string exportPath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\export_collection_center_remesh.obj";
             string tempExportPath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\temp_data.geojson";
 
             #region 初始化模型，并输出对应数据_中心点、面积、细分后mesh
-            ////读取mesh
+            //读取mesh
             var inputDataCollection = MeshCreation.ReadJsonData(jsonFilePath, "baseHeight", "brepHeight", out double[] heightCollection);
             ToolManagers.TimeCalculation(start, "读取");
 
@@ -819,8 +819,8 @@ namespace UrbanX.Application
             #endregion
 
 
-            //初始化可视点数据
-            var pointArray=MeshCreation.ReadJsonData(tempExportPath, "Area",out double[] areaCollection);
+            ////初始化可视点数据
+            var pointArray = MeshCreation.ReadJsonData(tempExportPath, "Area", out double[] areaCollection);
             var ptOrigin = new List<NetTopologySuite.Geometries.Point>() {
                 new  NetTopologySuite.Geometries.Point(2,2,0),
                 //new  NetTopologySuite.Geometries.Point(100,100,0),
@@ -850,7 +850,7 @@ namespace UrbanX.Application
             MeshCreation.InitiateColor(loadedMesh);
 
             //开始相切
-            MeshCreation.GetTri(loadedMesh, ptLargeList.ToArray(), 300, out Dictionary<int, int> meshIntrDic);
+            MeshCreation.GetTri(loadedMesh, ptLargeList.ToArray(),600, out Dictionary<int, int> meshIntrDic);
 
 
             ////计算射线及比例，按照largeList顺序

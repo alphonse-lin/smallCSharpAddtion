@@ -584,6 +584,9 @@ namespace UrbanX.Application.Geometry
             Dictionary<int, int> meshIntrCountDic = new Dictionary<int, int>();
             Dictionary<int, int> viewPtIntrCountDic = new Dictionary<int, int>();
 
+            var debugAngleList = new List<double>();
+            var debugDistanceList = new List<double>();
+
             for (int meshIndex = 0; meshIndex < count; meshIndex++)
             {
                 var trisNormals = mesh.GetTriNormal(meshIndex);
@@ -601,16 +604,20 @@ namespace UrbanX.Application.Geometry
                 var vertexList = mesh.GetTriangle(meshIndex);
                 int[] indexList = new int[3] { vertexList.a, vertexList.b, vertexList.c };
 
+                //To Do 用NTS进行四叉树索引
                 for (int viewPtIndex = 0; viewPtIndex < viewPtList.Count; viewPtIndex++)
                 {
-                    var direction = centroid - viewPtList[viewPtIndex];
-                    Ray3d ray = new Ray3d(viewPtList[viewPtIndex], direction);
+                    var direction = viewPtList[viewPtIndex]- centroid;
+                    Ray3d ray = new Ray3d(viewPtList[viewPtIndex], -direction);
 
                     //判定方向，是否同向
-                    var angle = (direction).Dot(trisNormals);
+                    var angle = (trisNormals).Dot(direction);
 
                     //判定距离，是否在视域内
                     var distance = centroid.Distance(viewPtList[viewPtIndex]);
+
+                    debugAngleList.Add(angle);
+                    debugDistanceList.Add(distance);
 
                     if (angle > 0 && distance < viewRange)
                     {
@@ -621,11 +628,11 @@ namespace UrbanX.Application.Geometry
                             #region 计算射线距离
                             double hit_dist = -1d;
                             IntrRay3Triangle3 intr = MeshQueries.TriangleIntersection(mesh, hit_tid, ray);
-                            hit_dist = centroid.Distance(ray.PointAt(intr.RayParameter));
+                            //hit_dist = centroid.Distance(ray.PointAt(intr.RayParameter));
                             #endregion
 
                             //double intrDistance=ray.PointAt(rayT).Distance(viewPtList[viewPtIndex]);
-                            if (hit_dist == distance)
+                            if (intr.RayParameter == distance)
                             {
                                 for (int vertexIndex = 0; vertexIndex < 3; vertexIndex++)
                                 {
