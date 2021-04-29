@@ -574,8 +574,9 @@ namespace UrbanX.Application.Geometry
         #endregion
 
         #region 003_Intersection
-        public static void GetTri(DMesh3 mesh, NTS.Geometries.Point[] ptArray, double viewRange, out Dictionary<int, int> MeshIntrCountDic)
+        public static void GetTri(DMesh3 meshIn, NTS.Geometries.Point[] ptArray, double viewRange, out Dictionary<int, int> MeshIntrCountDic)
         {
+            DMesh3 mesh = new DMesh3(meshIn);
             var count = mesh.TriangleCount;
             var viewPtList = NTSPtList2Vector3dList_3d(ptArray);
             DMeshAABBTree3 spatial = new DMeshAABBTree3(mesh);
@@ -586,21 +587,16 @@ namespace UrbanX.Application.Geometry
 
             var debugAngleList = new List<double>();
             var debugDistanceList = new List<double>();
+            var debugNormalList = new List<Vector3d>();
 
             for (int meshIndex = 0; meshIndex < count; meshIndex++)
             {
-                var trisNormals = mesh.GetTriNormal(meshIndex);
+                var trisNormals = -mesh.GetTriNormal(meshIndex);
+                //debugNormalList.Add(trisNormals);
                 if (trisNormals.z == 1d || trisNormals.z == -1d)
                     continue;
+
                 var centroid = mesh.GetTriCentroid(meshIndex);
-
-                Vector3d v0 = default(Vector3d);
-                Vector3d v1 = default(Vector3d);
-                Vector3d v2 = default(Vector3d);
-
-                mesh.GetTriVertices(meshIndex, ref v0, ref v1, ref v2);
-                Triangle3d tempTri = new Triangle3d(v0, v1, v2);
-
                 var vertexList = mesh.GetTriangle(meshIndex);
                 int[] indexList = new int[3] { vertexList.a, vertexList.b, vertexList.c };
 
@@ -608,7 +604,6 @@ namespace UrbanX.Application.Geometry
                 for (int viewPtIndex = 0; viewPtIndex < viewPtList.Count; viewPtIndex++)
                 {
                     var direction = viewPtList[viewPtIndex]- centroid;
-                    Ray3d ray = new Ray3d(viewPtList[viewPtIndex], -direction);
 
                     //判定方向，是否同向
                     var angle = (trisNormals).Dot(direction);
@@ -616,12 +611,14 @@ namespace UrbanX.Application.Geometry
                     //判定距离，是否在视域内
                     var distance = centroid.Distance(viewPtList[viewPtIndex]);
 
-                    debugAngleList.Add(angle);
-                    debugDistanceList.Add(distance);
+                    //debugAngleList.Add(angle);
+                    //debugDistanceList.Add(distance);
+                    
 
                     if (angle > 0 && distance < viewRange)
                     {
                         #region 计算被击中的次数
+                        Ray3d ray = new Ray3d(viewPtList[viewPtIndex], -direction);
                         int hit_tid = spatial.FindNearestHitTriangle(ray);
                         if (hit_tid != DMesh3.InvalidID)
                         {
@@ -632,7 +629,7 @@ namespace UrbanX.Application.Geometry
                             #endregion
 
                             //double intrDistance=ray.PointAt(rayT).Distance(viewPtList[viewPtIndex]);
-                            if (intr.RayParameter == distance)
+                            if (Math.Abs(intr.RayParameter - distance)<0.0001)
                             {
                                 for (int vertexIndex = 0; vertexIndex < 3; vertexIndex++)
                                 {
@@ -647,6 +644,8 @@ namespace UrbanX.Application.Geometry
                                 }
 
                             }
+
+
                         }
                         #endregion
 

@@ -794,35 +794,35 @@ namespace UrbanX.Application
             #endregion
 
             #region 006_计算射线_从三角面出发_多线程
-            var jsonFilePath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\building_center01.geojson";
+            var jsonFilePath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\building_center.geojson";
             string exportPath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\export_collection_center_remesh.obj";
             string tempExportPath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\temp_data.geojson";
 
             #region 初始化模型，并输出对应数据_中心点、面积、细分后mesh
-            //读取mesh
-            var inputDataCollection = MeshCreation.ReadJsonData(jsonFilePath, "baseHeight", "brepHeight", out double[] heightCollection);
-            ToolManagers.TimeCalculation(start, "读取");
+            ////读取mesh
+            //var inputDataCollection = MeshCreation.ReadJsonData(jsonFilePath, "baseHeight", "brepHeight", out double[] heightCollection);
+            //ToolManagers.TimeCalculation(start, "读取");
 
-            ////创建mesh simple，输出中心点与面积
+            //////创建mesh simple，输出中心点与面积
 
-            var simpleMesh = MeshCreation.ExtrudeMeshFromPtMinusTopBtn(inputDataCollection, heightCollection, out Dictionary<NetTopologySuite.Geometries.Point, double> secPtDic);
-            var fc = MeshCreation.BuildFeatureCollection(secPtDic.Keys.ToArray(), secPtDic.Values.ToArray());
-            MeshCreation.ExportGeoJSON(fc, tempExportPath);
+            //var simpleMesh = MeshCreation.ExtrudeMeshFromPtMinusTopBtn(inputDataCollection, heightCollection, out Dictionary<NetTopologySuite.Geometries.Point, double> secPtDic);
+            //var fc = MeshCreation.BuildFeatureCollection(secPtDic.Keys.ToArray(), secPtDic.Values.ToArray());
+            //MeshCreation.ExportGeoJSON(fc, tempExportPath);
 
-            //创建细分mesh
-            var remeshedMesh = MeshCreation.SimpleRemesher(simpleMesh, 10, 0.5);
-            ToolManagers.TimeCalculation(start, "细分");
+            ////创建细分mesh
+            //var remeshedMesh = MeshCreation.SimpleRemesher(simpleMesh, 10, 0.5);
+            //ToolManagers.TimeCalculation(start, "细分");
 
-            ////输出细分Mesh
-            MeshCreation.ExportMeshAsObj(exportPath, remeshedMesh, false);
-            ToolManagers.TimeCalculation(start, "输出模型");
+            //////输出细分Mesh
+            //MeshCreation.ExportMeshAsObj(exportPath, remeshedMesh, false);
+            //ToolManagers.TimeCalculation(start, "输出模型");
             #endregion
 
 
             ////初始化可视点数据
             var pointArray = MeshCreation.ReadJsonData(tempExportPath, "Area", out double[] areaCollection);
             var ptOrigin = new List<NetTopologySuite.Geometries.Point>() {
-                new  NetTopologySuite.Geometries.Point(2,2,0),
+                new  NetTopologySuite.Geometries.Point(0,0,0),
                 //new  NetTopologySuite.Geometries.Point(100,100,0),
                 //new  NetTopologySuite.Geometries.Point(200,200,0),
                 //new  NetTopologySuite.Geometries.Point(300,300,0),
