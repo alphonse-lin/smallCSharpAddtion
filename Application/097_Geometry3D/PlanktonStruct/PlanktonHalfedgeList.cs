@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Text;
+using System.Linq;
 
 namespace UrbanX.Application.Geometry
 {
-    public class PlanktonHalfedgeList : IEnumerable<PlanktonHalfedgeList>
+    /// <summary>
+    /// Provides access to the halfedges and <see cref="PlanktonHalfedge"/> related functionality of a Mesh.
+    /// </summary>
+    public class PlanktonHalfedgeList : IEnumerable<PlanktonHalfedge>
     {
         private readonly PlanktonMesh _mesh;
         private List<PlanktonHalfedge> _list;
@@ -65,7 +68,53 @@ namespace UrbanX.Application.Geometry
         {
             int pair = this.GetPairHalfedge(index);
 
+            //Reconnect adjacent halfedges
+            this.MakeConsecutive(this[pair].PrevHalfedge, this[index].NextHalfedge);
+            this.MakeConsecutive(this[index].PrevHalfedge, this[pair].NextHalfedge);
+
+            // Update vertices' outgoing halfedges, if necessary. If last halfedge then
+            // make vertex unused (outgoing == -1), otherwise set to next around vertex.
+            var v1 = _mesh.Vertices[this[index].StartVertex];
+            var v2 = _mesh.Vertices[this[pair].StartVertex];
+            if (v1.OutgoingHalfedge == index)
+            {
+                if (this[pair].NextHalfedge == index) { v1.OutgoingHalfedge = -1; }
+                else { v1.OutgoingHalfedge = this[pair].NextHalfedge; }
+            }
+            if (v2.OutgoingHalfedge == pair)
+            {
+                if (this[index].NextHalfedge == pair) { v2.OutgoingHalfedge = -1; }
+                else { v2.OutgoingHalfedge = this[index].NextHalfedge; }
+            }
+
+            // Mark halfedges for deletion
+            this[index] = PlanktonHalfedge.Unset;
+            this[pair] = PlanktonHalfedge.Unset;
         }
+
+
+        /// <summary>
+        /// Returns the <see cref="PlanktonHalfedge"/> at the given index.
+        /// </summary>
+        /// <param name="index">
+        /// Index of halfedge to get.
+        /// Must be larger than or equal to zero and smaller than the Halfedge Count of the mesh.
+        /// </param>
+        /// <returns>The halfedge at the given index.</returns>
+
+        public PlanktonHalfedge this[int index]
+        {
+            get { return this._list[index]; }
+            internal set { this._list[index] = value; }
+        }
+
+        #region internal helpers
+        internal void MakeConsecutive(int prev,int next)
+        {
+            this[prev].NextHalfedge = next;
+            this[next].PrevHalfedge = prev;
+        }
+        #endregion
 
         /// <summary>
         /// Gets the opposing halfedge in a pair.
@@ -83,6 +132,8 @@ namespace UrbanX.Application.Geometry
 
         #endregion
 
+        internal
+
         #endregion
 
         public IEnumerator<PlanktonHalfedgeList> GetEnumerator()
@@ -91,6 +142,11 @@ namespace UrbanX.Application.Geometry
         }
 
         IEnumerator IEnumerable.GetEnumerator()
+        {
+            throw new NotImplementedException();
+        }
+
+        IEnumerator<PlanktonHalfedge> IEnumerable<PlanktonHalfedge>.GetEnumerator()
         {
             throw new NotImplementedException();
         }
