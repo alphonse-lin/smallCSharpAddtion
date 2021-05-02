@@ -132,7 +132,31 @@ namespace UrbanX.Application.Geometry
 
         #endregion
 
-        internal
+        /// <summary>
+        /// Helper method to remove dead halfedges from the list, re-index and compact.
+        /// </summary>
+        internal void CompactHelper()
+        {
+            int marker = 0;
+            //Run through all the vertices
+            for (int iter = 0; iter < _list.Count; iter++)
+            {
+                //If halfedge is alive, check if we need to shuffle it down the list
+                if (!_list[iter].IsUnused)
+                {
+                    if (marker<iter)
+                    {
+                        //Room to shuffle, copy current halfedge to marked slot
+                        _list[marker] = _list[iter];
+
+                        //Update start vertex, if necessary
+                        var vertex = _mesh.Vertices[_list[marker].StartVertex];
+
+                    }
+                }
+            }
+
+        }
 
         #endregion
 
