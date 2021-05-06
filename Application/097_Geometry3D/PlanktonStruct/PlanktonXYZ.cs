@@ -1,9 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using System;
 
 namespace UrbanX.Application.Geometry
 {
+    /// <summary>
+    /// Represents a vector in Euclidean space.
+    /// </summary>
     public struct PlanktonXYZ
     {
         #region members
@@ -28,7 +29,6 @@ namespace UrbanX.Application.Geometry
         #endregion
 
         #region static properties
-
         /// <summary>
         /// Gets the value of the vector with components 0,0,0.
         /// </summary>
@@ -36,7 +36,7 @@ namespace UrbanX.Application.Geometry
         {
             get { return new PlanktonXYZ(); }
         }
-
+        
         /// <summary>
         /// Gets the value of the vector with components 1,0,0.
         /// </summary>
@@ -44,7 +44,7 @@ namespace UrbanX.Application.Geometry
         {
             get { return new PlanktonXYZ(1f, 0f, 0f); }
         }
-
+        
         /// <summary>
         /// Gets the value of the vector with components 0,1,0.
         /// </summary>
@@ -52,7 +52,7 @@ namespace UrbanX.Application.Geometry
         {
             get { return new PlanktonXYZ(0f, 1f, 0f); }
         }
-
+        
         /// <summary>
         /// Gets the value of the vector with components 0,0,1.
         /// </summary>
@@ -60,24 +60,23 @@ namespace UrbanX.Application.Geometry
         {
             get { return new PlanktonXYZ(0f, 0f, 1f); }
         }
-        #endregion
+        #endregion static properties
 
         #region properties
         /// <summary>
         /// Gets or sets the X (first) component of this vector.
         /// </summary>
         public float X { get { return _x; } set { _x = value; } }
-
+        
         /// <summary>
         /// Gets or sets the Y (second) component of this vector.
         /// </summary>
         public float Y { get { return _y; } set { _y = value; } }
-
+        
         /// <summary>
         /// Gets or sets the Z (third) component of this vector.
         /// </summary>
         public float Z { get { return _z; } set { _z = value; } }
-
         #endregion
 
         /// <summary>
@@ -86,14 +85,15 @@ namespace UrbanX.Application.Geometry
         /// <returns>A hash code that is not unique for each vector.</returns>
         public override int GetHashCode()
         {
-            return _x.GetHashCode()^_y.GetHashCode()^_z.GetHashCode();
+            // MSDN docs recommend XOR'ing the internal values to get a hash code
+            return _x.GetHashCode() ^ _y.GetHashCode() ^ _z.GetHashCode();
         }
 
         /// <summary>
         /// Sums up two vectors.
         /// </summary>
-        /// <param name="v1">A vector</param>
-        /// <param name="v2">A second vector</param>
+        /// <param name="v1">A vector.</param>
+        /// <param name="v2">A second vector.</param>
         /// <returns>A new vector that results from the componentwise addition of the two vectors.</returns>
         public static PlanktonXYZ operator +(PlanktonXYZ v1, PlanktonXYZ v2)
         {
@@ -194,3 +194,4 @@ namespace UrbanX.Application.Geometry
         }
     }
 }
+

@@ -8,8 +8,8 @@ using System.IO;
 using UrbanXX.IO.GeoJSON;
 using NTS = NetTopologySuite;
 using System.Drawing;
-using NetTopologySuite.Geometries;
 using NetTopologySuite.Features;
+using Urbanx.Application.Geometry.Extension;
 
 namespace UrbanX.Application.Geometry
 {
@@ -571,6 +571,195 @@ namespace UrbanX.Application.Geometry
             DMesh3 meshOut = new DMesh3(meshIn, true);
             return meshOut;
         }
+
+        #region 002_Remesher_001_Plankton
+        public static void ReMesh(int Algorithm, PlanktonMesh ip, int Subdivisions,  List<Vector3d> Anchors, List<DCurve3> SetCreases, List<DCurve3> TargetCreases,List<bool> HardCreases, bool HardBoundaries, bool StellateAll, bool ShowCreases, double tol)
+        {
+            PlanktonMesh P = new PlanktonMesh(ip);
+
+            // if it's a Loop subdivision, then pre-triangulate, splitting quads and stellating >4 n-gons
+            if (Algorithm==1)
+            {
+                int FaceCount = P.Faces.Count;
+                for (int i = 0; i < FaceCount; i++)
+                {
+                    int[] FaceHEs = P.Faces.GetHalfedges(i);
+                    if (FaceHEs.Length == 4 && !StellateAll)
+                    {
+                        double D0 = P.Vertices[P.Halfedges[FaceHEs[0]].StartVertex].Tog3Pt().Distance(P.Vertices[P.Halfedges[FaceHEs[2]].StartVertex].Tog3Pt());
+                        double D1 = P.Vertices[P.Halfedges[FaceHEs[1]].StartVertex].Tog3Pt().Distance(P.Vertices[P.Halfedges[FaceHEs[3]].StartVertex].Tog3Pt());
+
+                        // split face either along the shorter cross corners or at every even one in the case of a regular grid
+                        if (D0 < D1|| i%2==0)
+                        {
+                            P.Faces.SplitFace(FaceHEs[2], FaceHEs[0]);
+                        }
+                        else
+                        {
+                            P.Faces.SplitFace(FaceHEs[3], FaceHEs[1]);
+                        }
+                    }
+                    else if (FaceHEs.Length>4 || (StellateAll && FaceHEs.Length==4))
+                    {
+                        P.Faces.Stellate(i);
+                    }
+                }
+            }
+
+            // ----------------------------------------
+            // register anchors, creases and boundaries
+            // ----------------------------------------
+
+            List<VertexData> VerticesData = new List<VertexData>();
+            var AnchorLookup = new DCurve3(Anchors,false);
+            var CreaseLookup = new List<List<int>>();
+
+            // if no specification is made for HardCreases, then default to false
+            if (HardCreases.Count == 0) HardCreases.Add(false);
+
+            for (int c = 0; c < SetCreases.Count; c++)
+            {
+                //To Do 尚未添加domain
+                if (c+1>TargetCreases.Count)
+                { TargetCreases.Add(SetCreases[c]);}
+
+                if (c + 1 > HardCreases.Count)
+                    HardCreases.Add(HardCreases.Last());
+            }
+
+            var CreaseCheck = new List<int>();
+
+            for (int v = 0; v < P.Vertices.Count; v++)
+            {
+                var ThisPosition = P.Vertices[v].Tog3Pt();
+
+                // key data about each vertex
+                bool IsAnchor = false;
+                bool IsBoundary = P.Vertices.IsBoundary(v);
+                var CreaseIdc = new List<int>();
+
+                //check if a vertex is on a boundary
+                if (IsBoundary)
+                {
+                    IsAnchor = HardBoundaries;
+                    CreaseIdc.Add(-1);
+                }
+
+                // check if vertex is proximate to a user-defined anchor
+                if (!IsAnchor)
+                {
+                    int AnchorIdx = g3.CurveUtils.FindNearestIndex(AnchorLookup, ThisPosition);
+                    if (AnchorIdx>-1)
+                    {
+                        if (ThisPosition.Distance(Anchors[AnchorIdx])<tol)
+                        {
+                            IsAnchor = true;
+                        }
+                    }
+                }
+
+                //check vertices for crease adjacency
+                for (int c = 0; c < SetCreases.Count; c++)
+                {
+                    SetCreases[c].ClosestPoint(ThisPosition, out int SegIndex01, out double Ct);
+                    if (ThisPosition.Distance(SetCreases[c].PointAt(SegIndex01,Ct))<tol)
+                    {
+                        CreaseIdc.Add(c);
+                        if (!IsAnchor)
+                        {
+                            IsAnchor = HardCreases[c];
+                            if (IsAnchor)
+                            {
+                                TargetCreases[c].ClosestPoint(ThisPosition, out int SegIndex02, out double Pt);
+                                P.Vertices.SetVertex(v, TargetCreases[c].PointAt(SegIndex02, Pt));
+                            }
+                        }
+                    }
+                }
+
+                CreaseLookup.Add(CreaseIdc);
+                if (CreaseIdc.Count > 0) CreaseCheck.Add(v);
+
+                VerticesData.Add(new VertexData(IsAnchor, IsBoundary));
+            }
+
+            //find crease neighbours
+            foreach (int ThisIdx in CreaseCheck)
+            {
+                var ThisPosition = P.Vertices[ThisIdx].Tog3Pt();
+                VertexData ThisVertex = VerticesData[ThisIdx];
+
+                int[] Neighbours = P.Vertices.GetVertexNeighbours(ThisIdx);
+                foreach (int  CreaseIndex in CreaseLookup[ThisIdx])
+                {
+                    foreach (int NeighbourIdx in Neighbours)
+                    {
+                        VertexData NeighbourVertex = VerticesData[NeighbourIdx];
+                        // if the neighbour shares the crease index and the connection hasn't already been solved
+                        if (CreaseLookup[NeighbourIdx].Contains(CreaseIndex)&&!NeighbourVertex.NeighbourIndices.Contains(ThisIdx))
+                        {
+                            if (P.Halfedges.IsBoundary(P.Halfedges.FindHalfedge(ThisIdx,NeighbourIdx))|| CreaseIndex!=-1)
+                            {
+                                ThisVertex.CreaseIndices.Add(CreaseIndex);
+                                ThisVertex.NeighbourIndices.Add(NeighbourIdx);
+
+                                NeighbourVertex.CreaseIndices.Add(CreaseIndex);
+                                NeighbourVertex.NeighbourIndices.Add(ThisIdx);
+                            }
+                        }
+                    }
+                }
+            }
+
+            for (int i = 0; i < Subdivisions; i++)
+            {
+                P= Subdivision(Algorithm, P, HardBoundaries, ref VerticesData, TargetCreases, HardCreases);
+            }
+
+        }
+
+        private static PlanktonMesh Subdivision(int Algorithm, PlanktonMesh iP, bool HardBoundaries, ref List<VertexData> VerticesData, List<DCurve3> Creases, List<bool> HardCreases)
+        {
+            // the starting plankton mesh
+            PlanktonMesh P = new PlanktonMesh(iP);
+            // intermediary mesh for track indices during splitting
+            PlanktonMesh TP = new PlanktonMesh(iP);
+            // new mesh for writing new faces from vertex collections
+            PlanktonMesh NP = new PlanktonMesh();
+
+            var NewVerts = new List<PlanktonXYZ>();
+
+            // cycle through all even vertices
+            for (int v = 0; v < P.Vertices.Count; v++)
+            {
+                Vector3d NewPosition = new Vector3d();
+                bool Solved = false;
+                VertexData ThisVertex = VerticesData[v];
+
+                // solve where the vertex is either on a boundary or a crease
+                if (ThisVertex.IsAnchor)
+                {
+                    NewPosition = P.Vertices[v].Tog3Pt();
+                    Solved = true;
+                }
+                else if (ThisVertex.CreaseIndices.Count > 1)
+                {
+                    int NeighbourCounter = 0;
+                    Vector3d NeighbourSum = new Vector3d();
+
+                    // list of hard creases that pull this vertex
+                    List<int> PullCreases = new List<int>();
+                }
+            }
+        }
+
+        private static Interval1d ReMap(Interval1d orginInter,Interval1d newInter)
+        {
+            return new Interval1d(orginInter.a / orginInter.b, 1);
+        }
+        #endregion
+
+
         #endregion
 
         #region 003_Intersection
@@ -874,7 +1063,6 @@ namespace UrbanX.Application.Geometry
         }
         #endregion
 
-
         #region 004_Generating polyline
         public static Polygon2d[] CreatePolygon(string jsonFilePath)
         {
@@ -922,6 +1110,7 @@ namespace UrbanX.Application.Geometry
         #endregion
 
         #region 005_convert
+        #region NTS
         public static List<Vector3d> NTSPtList2Vector3dList_3d(IEnumerable<NTS.Geometries.Point> ptList)
         {
             List<Vector3d> vectorList = new List<Vector3d>(ptList.Count());
@@ -947,10 +1136,19 @@ namespace UrbanX.Application.Geometry
         {
             return new Vector3d(NTSPt.X, NTSPt.Y, NTSPt.Z);
         }
-
         #endregion
 
-        #region 006_Rhino_Tool_Manager
+        #region PlanktonMesh
+        public PlanktonMesh DMesh2PMesh(DMesh3 meshIn)
+        {
+            return PlanktonMesh mesh;
+        }
+
+        public static NTS.Geometries.Point PMeshVertex2NTSPt(PlanktonVertex ptIn)
+        {
+            return new NTS.Geometries.Point(ptIn.X, ptIn.Y, ptIn.Z);
+        }
+        #endregion
         #endregion
 
         class MyException : Exception
@@ -966,5 +1164,19 @@ namespace UrbanX.Application.Geometry
         public int Id { get; set; }
         public NTS.Geometries.Point CentPt { get; set; }
         public double Area { get; set; }
+    }
+
+    public class VertexData
+    {
+        public bool IsAnchor;
+        public bool IsBoundary;
+        public List<int> CreaseIndices = new List<int>();
+        public List<int> NeighbourIndices = new List<int>();
+
+        public VertexData(bool SetAnchor, bool SetBoundary)
+        {
+            IsAnchor = SetAnchor;
+            IsBoundary = SetBoundary;
+        }
     }
 }

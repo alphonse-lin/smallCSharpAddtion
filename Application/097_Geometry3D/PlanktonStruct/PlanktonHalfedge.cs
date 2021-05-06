@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace UrbanX.Application.Geometry
 {
@@ -21,14 +19,14 @@ namespace UrbanX.Application.Geometry
             NextHalfedge = -1;
             PrevHalfedge = -1;
         }
-
+        
         internal PlanktonHalfedge(int Start, int AdjFace, int Next)
         {
             StartVertex = Start;
             AdjacentFace = AdjFace;
             NextHalfedge = Next;
         }
-
+        
         /// <summary>
         /// Gets an Unset PlanktonHalfedge.
         /// </summary>
@@ -45,13 +43,13 @@ namespace UrbanX.Application.Geometry
                 };
             }
         }
-
+        
         /// <summary>
         /// <para>Whether or not the vertex is currently being referenced in the mesh.</para>
         /// <para>Defined as a halfedge which has no starting vertex index.</para>
         /// </summary>
         public bool IsUnused { get { return (this.StartVertex < 0); } }
-
+        
         [Obsolete()]
         public bool Dead { get { return this.IsUnused; } }
     }
