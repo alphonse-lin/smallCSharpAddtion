@@ -210,6 +210,7 @@ namespace Urbanx.Application.Geometry.Extension
                 else
                 {
                     HalfB.AdjacentFace = ConnectedFaces[0];
+
                     if (pMesh.Faces[HalfB.AdjacentFace].FirstHalfedge == -1)
                     {
                         pMesh.Faces[HalfB.AdjacentFace].FirstHalfedge = pMesh.Halfedges.Count + 1;
