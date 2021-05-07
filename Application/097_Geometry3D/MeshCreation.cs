@@ -573,7 +573,7 @@ namespace UrbanX.Application.Geometry
         }
 
         #region 002_Remesher_001_Plankton
-        public static void ReMesh(int Algorithm, PlanktonMesh ip, int Subdivisions,  List<Vector3d> Anchors, List<DCurve3> SetCreases, List<DCurve3> TargetCreases,List<bool> HardCreases, bool HardBoundaries, bool StellateAll, bool ShowCreases, double tol)
+        public static PlanktonMesh ReMesh(int Algorithm, PlanktonMesh ip, int Subdivisions,  List<Vector3d> Anchors, List<DCurve3> SetCreases, List<DCurve3> TargetCreases,List<bool> HardCreases, bool HardBoundaries=true, bool StellateAll=false, double tol=0.01)
         {
             PlanktonMesh P = new PlanktonMesh(ip);
 
@@ -611,7 +611,7 @@ namespace UrbanX.Application.Geometry
             // ----------------------------------------
 
             List<VertexData> VerticesData = new List<VertexData>();
-            var AnchorLookup = new DCurve3(Anchors,false);
+            var AnchorLookup = Anchors!=null ? new DCurve3(Anchors, false) : new DCurve3();
             var CreaseLookup = new List<List<int>>();
 
             // if no specification is made for HardCreases, then default to false
@@ -716,6 +716,7 @@ namespace UrbanX.Application.Geometry
                 P= Subdivision(Algorithm, P, HardBoundaries, ref VerticesData, TargetCreases, HardCreases);
             }
 
+            return P;
         }
 
         private static PlanktonMesh Subdivision(int Algorithm, PlanktonMesh iP, bool HardBoundaries, ref List<VertexData> VerticesData, List<DCurve3> Creases, List<bool> HardCreases)
@@ -749,8 +750,189 @@ namespace UrbanX.Application.Geometry
 
                     // list of hard creases that pull this vertex
                     List<int> PullCreases = new List<int>();
+
+                    // cycle through all of the crease indices
+                    for (int cc = 0; cc < ThisVertex.CreaseIndices.Count; cc++)
+                    {
+                        int NeighbourIndex = ThisVertex.NeighbourIndices[cc];
+                        int ThisCreaseIndex = ThisVertex.CreaseIndices[cc];
+                        VertexData NeighbourVertex = VerticesData[NeighbourIndex];
+                        if (NeighbourVertex.NeighbourIndices.Contains(v))
+                        {
+                            //ensure reciprocity
+                            if ((ThisVertex.IsBoundary && NeighbourVertex.IsBoundary)||
+                                (ThisVertex.CreaseIndices.Contains(ThisCreaseIndex) &&NeighbourVertex.CreaseIndices.Contains(ThisCreaseIndex)))
+                            {
+                                NeighbourCounter += 1;
+                                NeighbourSum += P.Vertices[NeighbourIndex].Tog3Pt();
+                                if (!ThisVertex.IsBoundary && HardCreases[ThisCreaseIndex]) PullCreases.Add(ThisCreaseIndex);
+                            }
+                        }
+                    }
+                    NewPosition = P.Vertices[v].Tog3Pt() * 0.75;
+                    NewPosition += (NeighbourSum / NeighbourCounter) * 0.25;
+                    if (PullCreases.Count>0)
+                    {
+                        Vector3d PulledPosition = new Vector3d();
+                        foreach (int PullCrease in PullCreases)
+                        {
+                            Creases[PullCrease].ClosestPoint(NewPosition, out int crtIndex, out double t);
+                            PulledPosition += Creases[PullCrease].PointAt(crtIndex, t) / PullCreases.Count;
+                        }
+                        NewPosition = PulledPosition;
+                    }
+                    Solved = true;
+                }
+
+                if (!Solved)// then it's a normal, even vertex
+                {
+                    if (Algorithm==0)
+                    {
+                        //Catmull-Clark
+                        int[] InHEs = P.Vertices.GetIncomingHalfedges(v);
+
+                        double Beta = 3.0 / (2 * InHEs.Length);
+                        double Delta = 1.0 / (4 * InHEs.Length);
+                        double BetaK = Beta / InHEs.Length;
+                        double DeltaK = Delta / InHEs.Length;
+
+                        NewPosition = P.Vertices[v].Tog3Pt() * (1 - Beta - Delta);
+
+                        foreach (int InHE in InHEs)
+                        {
+                            NewPosition += P.Vertices[P.Halfedges[InHE].StartVertex].Tog3Pt() * BetaK;
+                            NewPosition += P.Vertices[P.Halfedges[P.Halfedges[InHE].PrevHalfedge].StartVertex].Tog3Pt() * DeltaK;
+                        }
+                    }
+                    else
+                    {
+                        //Loop
+                        int[] Neighbours = P.Vertices.GetVertexNeighbours(v);
+
+                        int Valence = Neighbours.Length;
+                        double Beta = 0.625 - (Math.Pow((3 + 2 * Math.Cos((2 * Math.PI) / Valence)), 2) * 0.015625);
+                        double Mult = Beta / Valence;
+
+                        NewPosition = P.Vertices[v].Tog3Pt() * (1 - Beta);
+
+                        foreach (int Neighbour in Neighbours)
+                        {
+                            NewPosition += P.Vertices[Neighbour].Tog3Pt() * Mult;
+                        }
+                    }
+                }
+                NP.Vertices.Add(NewPosition);
+            }
+
+            // cycle through each halfedge pair to set odd vertices
+            for (int HE = 0; HE <P.Halfedges.Count; HE++)
+            {
+                int Pair = P.Halfedges.GetPairHalfedge(HE);
+                int ThisOpp = P.Halfedges[HE].PrevHalfedge;
+                int PairOpp = P.Halfedges[Pair].PrevHalfedge;
+
+                int HeSV = P.Halfedges[HE].StartVertex;
+                int PrSV = P.Halfedges[Pair].StartVertex;
+
+                // split the halfedges in the topology lookup mesh
+                TP.Halfedges.SplitEdge(HE);
+                // ensure that each face has a starting halfedge on an even vertex
+                if (P.Halfedges[Pair].AdjacentFace > -1) TP.Faces[P.Halfedges[Pair].AdjacentFace].FirstHalfedge = TP.Halfedges.Count - 1;
+
+                VertexData ThisVertex = VerticesData[HeSV];
+                VertexData PairVertex = VerticesData[PrSV];
+                VertexData NewVertex = new VertexData(false, P.Halfedges.IsBoundary(HE));
+
+                Vector3d NewPosition = new Vector3d();
+                bool Solved = false;
+
+                // check for boundary or crease condition and apply weights
+                if (ThisVertex.NeighbourIndices.Contains(PrSV) && PairVertex.NeighbourIndices.Contains(HeSV))
+                {
+                    int ThisCrease = ThisVertex.CreaseIndices[ThisVertex.NeighbourIndices.IndexOf(PrSV)];
+                    if (ThisCrease==PairVertex.CreaseIndices[PairVertex.NeighbourIndices.IndexOf(HeSV)])
+                    {
+                        NewPosition = P.Vertices[HeSV].Tog3Pt() * 0.5 +
+                            P.Vertices[PrSV].Tog3Pt() * 0.5;
+                        NewVertex.CreaseIndices.Add(ThisCrease);
+                        NewVertex.CreaseIndices.Add(ThisCrease);
+                        NewVertex.NeighbourIndices.Add(HeSV);
+                        NewVertex.NeighbourIndices.Add(PrSV);
+                        ThisVertex.NeighbourIndices[ThisVertex.NeighbourIndices.IndexOf(PrSV)] = NP.Vertices.Count;
+                        PairVertex.NeighbourIndices[PairVertex.NeighbourIndices.IndexOf(HeSV)] = NP.Vertices.Count;
+
+                        if (ThisCrease > -1) // check for hard creases in non-boundary conditions
+                        {
+                            if (HardCreases[ThisCrease])
+                            {
+                                Creases[ThisCrease].ClosestPoint(NewPosition, out int CrvIndex, out double t);
+                                NewPosition = Creases[ThisCrease].PointAt(CrvIndex,t);
+                            }
+                        }
+                        Solved = true;
+                    }
+                }
+
+                if (!Solved)
+                {
+
+                    if (Algorithm == 0)
+                    {
+                        // Catmull-Clark
+                        NewPosition = P.Vertices[HeSV].Tog3Pt()* 0.375 +
+                          P.Vertices[PrSV].Tog3Pt() * 0.375 +
+                          P.Vertices[P.Halfedges[P.Halfedges.GetPairHalfedge(P.Halfedges[HE].NextHalfedge)].StartVertex].Tog3Pt() * 0.0625 +
+                          P.Vertices[P.Halfedges[P.Halfedges[HE].PrevHalfedge].StartVertex].Tog3Pt() * 0.0625 +
+                          P.Vertices[P.Halfedges[P.Halfedges.GetPairHalfedge(P.Halfedges[Pair].NextHalfedge)].StartVertex].Tog3Pt() * 0.0625 +
+                          P.Vertices[P.Halfedges[P.Halfedges[Pair].PrevHalfedge].StartVertex].Tog3Pt() * 0.0625;
+                    }
+                    else
+                    {
+                        // Loop
+                        NewPosition = P.Vertices[HeSV].Tog3Pt() * 0.375 +
+                          P.Vertices[PrSV].Tog3Pt() * 0.375 +
+                          P.Vertices[P.Halfedges[ThisOpp].StartVertex].Tog3Pt() * 0.125 +
+                          P.Vertices[P.Halfedges[PairOpp].StartVertex].Tog3Pt() * 0.125;
+                    }
+                }
+
+                VerticesData.Add(NewVertex);
+                NP.Vertices.Add(NewPosition);
+            }//end he cycle
+
+            //add center point to each face for Catmull-Clark
+            if (Algorithm == 0)
+            {
+                // add center point for each face and build subdivided faces in the new planktonmesh
+                for (int f = 0; f < P.Faces.Count; f++)
+                {
+                    int CenterIdx = NP.Vertices.Count;
+                    NP.Vertices.Add(P.Faces.GetFaceCenter(f).Tog3Pt());
+                    VerticesData.Add(new VertexData(false, false));
+                    int[] FaceVerts = TP.Faces.GetFaceVertices(f);
+                    for (int nf = 0; nf < FaceVerts.Length-1; nf += 2)
+                    {
+                        int LastVert = nf - 1;
+                        if (nf == 0) LastVert = FaceVerts.Length - 1;
+                        NP.Faces.AddFace(FaceVerts[nf], FaceVerts[nf + 1], CenterIdx, FaceVerts[LastVert]);
+                    }
                 }
             }
+            else
+            {
+                for (int f = 0; f < P.Faces.Count; f++)
+                {
+                    // add new triangulated faces
+                    int[] FaceVerts = TP.Faces.GetFaceVertices(f);
+                    NP.Faces.AddFace(FaceVerts[0], FaceVerts[1], FaceVerts[5]);
+                    NP.Faces.AddFace(FaceVerts[2], FaceVerts[3], FaceVerts[1]);
+                    NP.Faces.AddFace(FaceVerts[4], FaceVerts[5], FaceVerts[3]);
+                    NP.Faces.AddFace(FaceVerts[1], FaceVerts[3], FaceVerts[5]);
+                }
+            }
+
+            return NP;
+
         }
 
         private static Interval1d ReMap(Interval1d orginInter,Interval1d newInter)
@@ -773,10 +955,6 @@ namespace UrbanX.Application.Geometry
 
             Dictionary<int, int> meshIntrCountDic = new Dictionary<int, int>();
             Dictionary<int, int> viewPtIntrCountDic = new Dictionary<int, int>();
-
-            var debugAngleList = new List<double>();
-            var debugDistanceList = new List<double>();
-            var debugNormalList = new List<Vector3d>();
 
             for (int meshIndex = 0; meshIndex < count; meshIndex++)
             {
@@ -1139,10 +1317,7 @@ namespace UrbanX.Application.Geometry
         #endregion
 
         #region PlanktonMesh
-        public PlanktonMesh DMesh2PMesh(DMesh3 meshIn)
-        {
-            return PlanktonMesh mesh;
-        }
+        
 
         public static NTS.Geometries.Point PMeshVertex2NTSPt(PlanktonVertex ptIn)
         {
