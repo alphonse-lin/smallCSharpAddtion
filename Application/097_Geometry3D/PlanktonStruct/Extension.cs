@@ -157,22 +157,53 @@ namespace Urbanx.Application.Geometry.Extension
                 pMesh.Faces.Add(new PlanktonFace());
             }
 
+            //To Do 双层冒泡排序
+            SortedDictionary<int, SortedList<int, Index4i>> sortedEdgeDic = new SortedDictionary<int, SortedList<int, Index4i>>();
+            for (int i = 0; i < source.EdgeCount; i++)
+            {
+                var tempEdge = source.GetEdge(i);
+                if (sortedEdgeDic.ContainsKey(tempEdge.a))
+                {
+                    sortedEdgeDic[tempEdge.a].Add(tempEdge.b, tempEdge);
+                }
+                else
+                {
+                    sortedEdgeDic.Add(tempEdge.a, new SortedList<int, Index4i>() { { tempEdge.b, tempEdge } });
+                }
+            }
+
+            var sortedEdge = new List<Index4i>(source.EdgeCount);
+            var tempArray = sortedEdgeDic.Keys.ToArray();
+            for (int i = 0; i < sortedEdgeDic.Keys.Count; i++)
+            {
+                var temp = tempArray[i];
+                for (int j = 0; j < temp; j++)
+                {
+                    sortedEdge.Add(temp.ElementAt(j));
+                }
+            }
+
             for (int i = 0; i < source.EdgeCount; i++)
             {
                 PlanktonHalfedge HalfA = new PlanktonHalfedge();
-                var edgeFromSource = source.GetEdge(i);
+                var edgeFromSource = sortedEdge[i];
 
                 //To Do 检查合理性
                 HalfA.StartVertex = edgeFromSource.a;
+
                 if (pMesh.Vertices[HalfA.StartVertex].OutgoingHalfedge == -1)
                     pMesh.Vertices[HalfA.StartVertex].OutgoingHalfedge = pMesh.Halfedges.Count;
 
                 PlanktonHalfedge HalfB = new PlanktonHalfedge();
+
                 HalfB.StartVertex = edgeFromSource.b;
                 if (pMesh.Vertices[HalfB.StartVertex].OutgoingHalfedge == -1)
                     pMesh.Vertices[HalfB.StartVertex].OutgoingHalfedge = pMesh.Halfedges.Count + 1;
 
-                int[] ConnectedFaces = new int[] { edgeFromSource.c, edgeFromSource.d };
+                List<int> tempConnectedFaces = new List<int>() { edgeFromSource.c, edgeFromSource.d };
+                if (tempConnectedFaces.Contains(-1))
+                    tempConnectedFaces.Remove(-1);
+                int[] ConnectedFaces = tempConnectedFaces.ToArray();
                 bool[] Match = new bool[] { source.tri_has_neighbour_t(i, edgeFromSource.c), source.tri_has_neighbour_t(i, edgeFromSource.d) };
 
                 Match[0] = false;
@@ -181,10 +212,14 @@ namespace Urbanx.Application.Geometry.Extension
                 int VertA = source.GetTriangle(ConnectedFaces[0]).a;
                 int VertB = source.GetTriangle(ConnectedFaces[0]).b;
                 int VertC = source.GetTriangle(ConnectedFaces[0]).c;
+                int VertD = source.GetTriangle(ConnectedFaces[0]).c;
 
-                if ((VertA == HalfA.StartVertex && VertB == HalfB.StartVertex)) { Match[0] = true; }
-                if ((VertB == HalfA.StartVertex && VertC == HalfB.StartVertex)) { Match[0] = true; }
-                if ((VertC == HalfA.StartVertex && VertA == HalfB.StartVertex)) { Match[0] = true; }
+                if ((VertA == HalfA.StartVertex) && (VertB == HalfB.StartVertex)) { Match[0] = true; }
+                if ((VertB == HalfA.StartVertex) && (VertC == HalfB.StartVertex)) { Match[0] = true; }
+                if ((VertC == HalfA.StartVertex) && (VertD == HalfB.StartVertex)) { Match[0] = true; }
+                if ((VertD == HalfA.StartVertex) && (VertA == HalfB.StartVertex)) { Match[0] = true; }
+                if ((VertC == HalfA.StartVertex) && (VertA == HalfB.StartVertex)) { Match[0] = true; }
+                if ((VertB == HalfA.StartVertex) && (VertD == HalfB.StartVertex)) { Match[0] = true; }
 
                 if (Match[0] == true)
                 {
@@ -233,7 +268,6 @@ namespace Urbanx.Application.Geometry.Extension
                 }
                 pMesh.Halfedges.Add(HalfA);
                 pMesh.Halfedges.Add(HalfB);
-
             }
 
             for (int i = 0; i < pMesh.Halfedges.Count; i += 2)
@@ -315,23 +349,24 @@ namespace Urbanx.Application.Geometry.Extension
             }
             for (int i = 0; i < meshIn.Faces.Count; i++)
             {
-                int[] faceVertices = meshIn.Faces.GetFaceVertices(i);
-                if (faceVertices.Length == 3)
+                //var debug=meshIn.Faces.GetFaceCenter(i);
+                int[] fvs = meshIn.Faces.GetFaceVertices(i);
+                if (fvs.Length == 3)
                 {
-                    meshOut.AppendTriangle(faceVertices[0], faceVertices[1], faceVertices[2]);
+                    meshOut.AppendTriangle(fvs[0], fvs[1], fvs[2]);
                 }
                 #region 大于三面，目前不可能出现
-                else if (faceVertices.Length == 4)
+                else if (fvs.Length == 4)
                 {
-                    meshOut.AppendTriangle(faceVertices[0], faceVertices[1], faceVertices[2], faceVertices[3]);
+                    meshOut.AppendTriangle(fvs[0], fvs[1], fvs[2], fvs[3]);
                 }
-                else if (faceVertices.Length > 4)
+                else if (fvs.Length > 4)
                 {
                     PlanktonXYZ faceCenter = meshIn.Faces.GetFaceCenter(i);
                     meshOut.AppendVertex(new Vector3d(faceCenter.X, faceCenter.Y, faceCenter.Z));
-                    for (int j = 0; j < faceVertices.Length; j++)
+                    for (int j = 0; j < fvs.Length; j++)
                     {
-                        meshOut.AppendTriangle(faceVertices[j], faceVertices[(j + 1) % faceVertices.Length], meshOut.VertexCount - 1);
+                        meshOut.AppendTriangle(fvs[j], fvs[(j + 1) % fvs.Length], meshOut.VertexCount - 1);
                     }
                 }
                 #endregion
