@@ -120,9 +120,33 @@ namespace Urbanx.Application.Geometry.Extension
             return new Vector3d(ptIn.X, ptIn.Y, ptIn.Z);
         }
 
+        /// <summary>
+        /// arrange ptList into clockwise
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="vIndex"></param>
+        /// <returns></returns>
         public static int[] ConnectedVertices(this DMesh3 source, int vIndex)
         {
-            var edgesNeighbours = source.VtxVerticesItr(vIndex).ToArray();
+            
+            var edgesNeighbours = source.VtxVerticesItr(vIndex);
+
+            var count = edgesNeighbours.Count();
+            var centroid= source.GetVertex(vIndex); 
+            List<SortedEdgeClass> vecList = new List<SortedEdgeClass>(count);
+            foreach (var item in edgesNeighbours)
+            {
+                var tempVertex=source.GetVertex(item);
+                SortedEdgeClass temp = new SortedEdgeClass(item,tempVertex.x , tempVertex.y, tempVertex.z);
+                vecList.Add(temp);
+            }
+            var sortedVecList=vecList.OrderBy(x => Math.Atan2(x.x - centroid.x, x.y - centroid.y)).ToList();
+
+            int[] result = new int[count];
+            for (int i = 0; i < sortedVecList.Count; i++)
+            {
+                result[i] = sortedVecList[i].index;
+            }
             //List<int> indexNeighbours = new List<int>();
 
             //for (int edgeIndex = 0; edgeIndex < edgesNeighbours.Count; edgeIndex++)
@@ -135,7 +159,31 @@ namespace Urbanx.Application.Geometry.Extension
             //    if (!indexNeighbours.Contains(vertex02))
             //        indexNeighbours.Add(vertex02);
             //}
-            return edgesNeighbours;
+            return result;
+        }
+
+        public static int FindSortedEdgeIndex(this List<Index4i> edgeList, int vA, int vB)
+        {
+            int result = -1;
+            for (int i = 0; i < edgeList.Count; i++)
+            {
+                var tempEdge = edgeList[i];
+                if (tempEdge.a==vA)
+                {
+                    if (tempEdge.b==vB)
+                    {
+                        result = i;
+                    }
+                }else if (tempEdge.b == vA)
+                {
+                    if (tempEdge.a == vB)
+                    {
+                        result = i;
+                    }
+                }
+
+            }
+            return result; 
         }
 
         public static PlanktonMesh g3Mesh2pMesh(this DMesh3 source)
@@ -248,7 +296,22 @@ namespace Urbanx.Application.Geometry.Extension
                 pMesh.Halfedges.Add(HalfB);
             }
 
-            for (int i = 0; i < pMesh.Halfedges.Count; i += 2)
+            //Dictionary<int, List<int>> debugDic = new Dictionary<int, List<int>>();
+            //for (int i = 0; i < pMesh.Halfedges.Count; i++)
+            //{
+            //    var temp=source.ConnectedVertices(pMesh.Halfedges[i].StartVertex);
+            //    if (debugDic.ContainsKey(pMesh.Halfedges[i].StartVertex))
+            //    {
+            //        debugDic[pMesh.Halfedges[i].StartVertex].AddRange(source.ConnectedVertices(pMesh.Halfedges[i].StartVertex));
+            //    }
+            //    else
+            //    {
+            //        debugDic.Add(pMesh.Halfedges[i].StartVertex, source.ConnectedVertices(pMesh.Halfedges[i].StartVertex).ToList());
+            //    }
+            //}
+
+
+                for (int i = 0; i < pMesh.Halfedges.Count; i += 2)
             {
                 int[] EndNeighbours = source.ConnectedVertices(pMesh.Halfedges[i + 1].StartVertex);
                 for (int j = 0; j < EndNeighbours.Length; j++)
@@ -258,17 +321,17 @@ namespace Urbanx.Application.Geometry.Extension
                         int EndOfNextHalfedge = EndNeighbours[(j - 1 + EndNeighbours.Length) % EndNeighbours.Length];
                         int StartOfPrevOfPairHalfedge = EndNeighbours[(j + 1) % EndNeighbours.Length];
 
-                        int NextEdge = source.FindEdge(pMesh.Halfedges[i + 1].StartVertex, EndOfNextHalfedge);
-                        int PrevPairEdge = source.FindEdge(pMesh.Halfedges[i + 1].StartVertex, StartOfPrevOfPairHalfedge);
+                        int NextEdge = sortedEdge.FindSortedEdgeIndex(pMesh.Halfedges[i + 1].StartVertex, EndOfNextHalfedge);
+                        int PrevPairEdge = sortedEdge.FindSortedEdgeIndex(pMesh.Halfedges[i + 1].StartVertex, StartOfPrevOfPairHalfedge);
 
-                        if (source.GetEdge(NextEdge).a == pMesh.Halfedges[i + 1].StartVertex){
+                        if (sortedEdge[NextEdge].a == pMesh.Halfedges[i + 1].StartVertex){
                             pMesh.Halfedges[i].NextHalfedge = NextEdge * 2;
                         }else{
                             pMesh.Halfedges[i].NextHalfedge = NextEdge * 2 + 1;
                         }
 
 
-                        if (source.GetEdge(PrevPairEdge).b == pMesh.Halfedges[i + 1].StartVertex){
+                        if (sortedEdge[PrevPairEdge].b == pMesh.Halfedges[i + 1].StartVertex){
                             pMesh.Halfedges[i + 1].PrevHalfedge = PrevPairEdge * 2;
                         }else{
                             pMesh.Halfedges[i + 1].PrevHalfedge = PrevPairEdge * 2 + 1;
@@ -285,17 +348,17 @@ namespace Urbanx.Application.Geometry.Extension
                         int EndOfNextOfPairHalfedge = StartNeighbours[(j - 1 + StartNeighbours.Length) % StartNeighbours.Length];
                         int StartOfPrevHalfedge = StartNeighbours[(j + 1) % StartNeighbours.Length];
 
-                        int NextPairEdge = source.FindEdge(pMesh.Halfedges[i].StartVertex, EndOfNextOfPairHalfedge);
-                        int PrevEdge = source.FindEdge(pMesh.Halfedges[i].StartVertex, StartOfPrevHalfedge);
+                        int NextPairEdge = sortedEdge.FindSortedEdgeIndex(pMesh.Halfedges[i].StartVertex, EndOfNextOfPairHalfedge);
+                        int PrevEdge = sortedEdge.FindSortedEdgeIndex(pMesh.Halfedges[i].StartVertex, StartOfPrevHalfedge);
 
-                        if (source.GetEdge(NextPairEdge).a == pMesh.Halfedges[i].StartVertex){
+                        if (sortedEdge[NextPairEdge].a == pMesh.Halfedges[i].StartVertex){
                             pMesh.Halfedges[i + 1].NextHalfedge = NextPairEdge * 2;
                         } else{
                             pMesh.Halfedges[i + 1].NextHalfedge = NextPairEdge * 2 + 1;
                         }
 
 
-                        if (source.GetEdge(PrevEdge).b == pMesh.Halfedges[i].StartVertex){
+                        if (sortedEdge[PrevEdge].b == pMesh.Halfedges[i].StartVertex){
                             pMesh.Halfedges[i].PrevHalfedge = PrevEdge * 2;
                         }else{
                             pMesh.Halfedges[i].PrevHalfedge = PrevEdge * 2 + 1;
@@ -356,6 +419,22 @@ namespace Urbanx.Application.Geometry.Extension
                     if (x.b < y.b) return -1;
                 }
                 return 0;
+            }
+        }
+
+        internal struct SortedEdgeClass
+        {
+            public int index { get; set; }
+            public double x{ get; set; }
+            public double y { get; set; }
+            public double z { get; set; }
+
+            public SortedEdgeClass(int Index, double X, double Y, double Z)
+            {
+                index = Index;
+                x = X;
+                y = Y;
+                z = Z;
             }
         }
     }

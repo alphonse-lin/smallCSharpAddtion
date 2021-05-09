@@ -884,8 +884,8 @@ namespace UrbanX.Application
 
             ////创建mesh simple，输出中心点与面积
 
-            //var simpleMesh = MeshCreation.ExtrudeMeshFromPtMinusTopBtn(inputDataCollection, heightCollection, out Dictionary<NetTopologySuite.Geometries.Point, double> secPtDic);
-            var simpleMesh = MeshCreation.BoundarySrfFromPts(inputDataCollection[0]);
+            var simpleMesh = MeshCreation.ExtrudeMeshFromPtMinusTopBtn(inputDataCollection, heightCollection, out Dictionary<NetTopologySuite.Geometries.Point, double> secPtDic);
+            //var simpleMesh = MeshCreation.BoundarySrfFromPts(inputDataCollection[0]);
             //var fc = MeshCreation.BuildFeatureCollection(secPtDic.Keys.ToArray(), secPtDic.Values.ToArray());
             //MeshCreation.ExportGeoJSON(fc, tempExportPath);
             MeshCreation.ExportMeshAsObj(exportPathSmallBox, simpleMesh);
@@ -900,8 +900,8 @@ namespace UrbanX.Application
             ToolManagers.TimeCalculation(start, "细分");
 
             ////输出细分Mesh
-            var remeshedMesh = pMesh.pMesh2g3Mesh();
-            MeshCreation.ExportMeshAsObj(exportPath, remeshedMesh, false);
+            var exportedMesh = pMesh.pMesh2g3Mesh();
+            MeshCreation.ExportMeshAsObj(exportPath, exportedMesh, false);
             ToolManagers.TimeCalculation(start, "输出模型");
             #endregion
 
