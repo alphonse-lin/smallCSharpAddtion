@@ -66,7 +66,7 @@ namespace UrbanX.Application
                 }
             }
 
-            indices.Reverse();
+            //indices.Reverse();
             return indices.ToArray();
         }
 

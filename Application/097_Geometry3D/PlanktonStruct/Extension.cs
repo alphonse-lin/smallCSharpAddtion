@@ -129,37 +129,31 @@ namespace Urbanx.Application.Geometry.Extension
         public static int[] ConnectedVertices(this DMesh3 source, int vIndex)
         {
             
-            var edgesNeighbours = source.VtxVerticesItr(vIndex);
+            var vertexNeighbours = source.VtxVerticesItr(vIndex);
+            //return edgesNeighbours.ToArray();
 
-            var count = edgesNeighbours.Count();
-            var centroid= source.GetVertex(vIndex); 
+            var count = vertexNeighbours.Count();
+            var centroid = source.GetVertex(vIndex);
             List<SortedEdgeClass> vecList = new List<SortedEdgeClass>(count);
-            foreach (var item in edgesNeighbours)
+            foreach (var item in vertexNeighbours)
             {
-                var tempVertex=source.GetVertex(item);
-                SortedEdgeClass temp = new SortedEdgeClass(item,tempVertex.x , tempVertex.y, tempVertex.z);
+                var tempVertex = source.GetVertex(item);
+                SortedEdgeClass temp = new SortedEdgeClass(item, tempVertex.x, tempVertex.y, tempVertex.z);
                 vecList.Add(temp);
             }
-            var sortedVecList=vecList.OrderBy(x => Math.Atan2(x.x - centroid.x, x.y - centroid.y)).ToList();
+            var sortedVecList = vecList.OrderBy(x => Math.Atan2(x.y - centroid.y,x.x - centroid.x)).ToList();
 
             int[] result = new int[count];
             for (int i = 0; i < sortedVecList.Count; i++)
-            {
                 result[i] = sortedVecList[i].index;
-            }
-            //List<int> indexNeighbours = new List<int>();
-
-            //for (int edgeIndex = 0; edgeIndex < edgesNeighbours.Count; edgeIndex++)
-            //{
-            //    var tempEdge = source.GetEdge(edgeIndex);
-            //    var vertex01 = tempEdge.a;
-            //    var vertex02 = tempEdge.b;
-            //    if (!indexNeighbours.Contains(vertex01))
-            //        indexNeighbours.Add(vertex01);
-            //    if (!indexNeighbours.Contains(vertex02))
-            //        indexNeighbours.Add(vertex02);
-            //}
             return result;
+        }
+
+        public static int[] ConnectedVertices_1(this DMesh3 source, int vIndex)
+        {
+
+            var edgesNeighbours = source.VtxVerticesItr(vIndex);
+            return edgesNeighbours.ToArray();
         }
 
         public static int FindSortedEdgeIndex(this List<Index4i> edgeList, int vA, int vB)
@@ -296,22 +290,36 @@ namespace Urbanx.Application.Geometry.Extension
                 pMesh.Halfedges.Add(HalfB);
             }
 
-            //Dictionary<int, List<int>> debugDic = new Dictionary<int, List<int>>();
-            //for (int i = 0; i < pMesh.Halfedges.Count; i++)
-            //{
-            //    var temp=source.ConnectedVertices(pMesh.Halfedges[i].StartVertex);
-            //    if (debugDic.ContainsKey(pMesh.Halfedges[i].StartVertex))
-            //    {
-            //        debugDic[pMesh.Halfedges[i].StartVertex].AddRange(source.ConnectedVertices(pMesh.Halfedges[i].StartVertex));
-            //    }
-            //    else
-            //    {
-            //        debugDic.Add(pMesh.Halfedges[i].StartVertex, source.ConnectedVertices(pMesh.Halfedges[i].StartVertex).ToList());
-            //    }
-            //}
+            Dictionary<int, List<int>> debugDic = new Dictionary<int, List<int>>();
+            for (int i = 0; i < pMesh.Halfedges.Count; i++)
+            {
+                var temp = source.ConnectedVertices(pMesh.Halfedges[i].StartVertex);
+                if (debugDic.ContainsKey(pMesh.Halfedges[i].StartVertex))
+                {
+                    continue;
+                }
+                else
+                {
+                    debugDic.Add(pMesh.Halfedges[i].StartVertex,temp.ToList()) ;
+                }
+            }
+
+            Dictionary<int, List<int>> debugDic2 = new Dictionary<int, List<int>>();
+            for (int i = 0; i < pMesh.Halfedges.Count; i++)
+            {
+                var temp = source.ConnectedVertices_1(pMesh.Halfedges[i].StartVertex);
+                if (debugDic2.ContainsKey(pMesh.Halfedges[i].StartVertex))
+                {
+                    continue;
+                }
+                else
+                {
+                    debugDic2.Add(pMesh.Halfedges[i].StartVertex, temp.ToList());
+                }
+            }
 
 
-                for (int i = 0; i < pMesh.Halfedges.Count; i += 2)
+            for (int i = 0; i < pMesh.Halfedges.Count; i += 2)
             {
                 int[] EndNeighbours = source.ConnectedVertices(pMesh.Halfedges[i + 1].StartVertex);
                 for (int j = 0; j < EndNeighbours.Length; j++)
