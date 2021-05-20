@@ -1,0 +1,127 @@
+{
+  "version": 3,
+  "targets": {
+    ".NETCoreApp,Version=v3.1": {
+      "Rhino3dm/0.3.0": {
+        "type": "package",
+        "compile": {
+          "lib/netstandard2.0/Rhino3dm.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard2.0/Rhino3dm.dll": {}
+        },
+        "runtimeTargets": {
+          "runtimes/linux-x64/native/librhino3dm_native.so": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/osx-x64/native/librhino3dm_native.dylib": {
+            "assetType": "native",
+            "rid": "osx-x64"
+          },
+          "runtimes/win-x64/native/librhino3dm_native.dll": {
+            "assetType": "native",
+            "rid": "win-x64"
+          },
+          "runtimes/win-x86/native/librhino3dm_native.dll": {
+            "assetType": "native",
+            "rid": "win-x86"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "Rhino3dm/0.3.0": {
+      "sha512": "CesN7U0pSIol4ZP0gUzxEnRZdxnXGJuX2c2qIRuM7ORBdgRyB58zQSab7e8hurYJ1DZO6xAFyDwWDRdp5KoiEQ==",
+      "type": "package",
+      "path": "rhino3dm/0.3.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "build/net45/Rhino3dm.props",
+        "icon.png",
+        "lib/net45/Rhino3dm.dll",
+        "lib/netstandard2.0/Rhino3dm.dll",
+        "rhino3dm.0.3.0.nupkg.sha512",
+        "rhino3dm.nuspec",
+        "runtimes/linux-x64/native/librhino3dm_native.so",
+        "runtimes/osx-x64/native/librhino3dm_native.dylib",
+        "runtimes/win-x64/native/librhino3dm_native.dll",
+        "runtimes/win-x86/native/librhino3dm_native.dll"
+      ]
+    }
+  },
+  "projectFileDependencyGroups": {
+    ".NETCoreApp,Version=v3.1": [
+      "Rhino3dm >= 0.3.0"
+    ]
+  },
+  "packageFolders": {
+    "C:\\Users\\CAUPD-BJ141\\.nuget\\packages\\": {},
+    "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder": {}
+  },
+  "project": {
+    "version": "1.0.0",
+    "restore": {
+      "projectUniqueName": "E:\\114_temp\\008_代码集\\002_extras\\smallCSharpAddtion\\Testing\\Testing.csproj",
+      "projectName": "Testing",
+      "projectPath": "E:\\114_temp\\008_代码集\\002_extras\\smallCSharpAddtion\\Testing\\Testing.csproj",
+      "packagesPath": "C:\\Users\\CAUPD-BJ141\\.nuget\\packages\\",
+      "outputPath": "E:\\114_temp\\008_代码集\\002_extras\\smallCSharpAddtion\\Testing\\obj\\",
+      "projectStyle": "PackageReference",
+      "fallbackFolders": [
+        "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
+      ],
+      "configFilePaths": [
+        "C:\\Users\\CAUPD-BJ141\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+      ],
+      "originalTargetFrameworks": [
+        "netcoreapp3.1"
+      ],
+      "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "https://api.nuget.org/v3/index.json": {}
+      },
+      "frameworks": {
+        "netcoreapp3.1": {
+          "targetAlias": "netcoreapp3.1",
+          "projectReferences": {}
+        }
+      },
+      "warningProperties": {
+        "warnAsError": [
+          "NU1605"
+        ]
+      }
+    },
+    "frameworks": {
+      "netcoreapp3.1": {
+        "targetAlias": "netcoreapp3.1",
+        "dependencies": {
+          "Rhino3dm": {
+            "target": "Package",
+            "version": "[0.3.0, )"
+          }
+        },
+        "imports": [
+          "net461",
+          "net462",
+          "net47",
+          "net471",
+          "net472",
+          "net48"
+        ],
+        "assetTargetFallback": true,
+        "warn": true,
+        "frameworkReferences": {
+          "Microsoft.NETCore.App": {
+            "privateAssets": "all"
+          }
+        },
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.102\\RuntimeIdentifierGraph.json"
+      }
+    }
+  }
+}

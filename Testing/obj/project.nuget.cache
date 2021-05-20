@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "FlJ3mytOiqB5kgGherIF50VVsiyLO8tbLx8vGGdZLSsIxXktBJxHbF0zCd72j21PmAZRB8ph7jDzbBz9amfOcg==",
+  "success": true,
+  "projectFilePath": "E:\\114_temp\\008_代码集\\002_extras\\smallCSharpAddtion\\Testing\\Testing.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\CAUPD-BJ141\\.nuget\\packages\\rhino3dm\\0.3.0\\rhino3dm.0.3.0.nupkg.sha512"
+  ],
+  "logs": []
+}
