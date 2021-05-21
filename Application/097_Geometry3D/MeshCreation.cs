@@ -10,6 +10,7 @@ using NTS = NetTopologySuite;
 using System.Drawing;
 using NetTopologySuite.Features;
 using Urbanx.Application.Geometry.Extension;
+using Rh = Rhino.Geometry;
 
 namespace UrbanX.Application.Geometry
 {
@@ -321,7 +322,8 @@ namespace UrbanX.Application.Geometry
             for (int i = 0; i < OriginalData.Length; i++)
             {
                 var meshSrf = BoundarySrfFromPts(OriginalData[i], out NTS.Geometries.Point centerPt, out double meshArea);
-                var meshExtruded = ExtrudeMeshFromMesh(meshSrf, height[i]);
+                //var meshExtruded = ExtrudeMeshFromMesh(meshSrf, height[i]); 
+                var meshExtruded = ExtrudeMeshEdge(meshSrf, height[i]); 
 
                 MeshEditor.Append(meshCollection, meshExtruded);
                 var triAreaList = new List<double>(meshExtruded.TriangleCount);
@@ -340,6 +342,39 @@ namespace UrbanX.Application.Geometry
                     temp_centerPtDic.Add(centerPt, tempArea);
             }
 
+            centerPtDic = temp_centerPtDic;
+            return meshCollection;
+        }
+
+        public static DMesh3 ExtrudeMeshFromPtMinusTopBtn(Vector3d[][] OriginalData, double[] height, out Dictionary<NTS.Geometries.Point, double> centerPtDic, out DCurve3[][] edges)
+        {
+            Dictionary<NTS.Geometries.Point, double> temp_centerPtDic = new Dictionary<NTS.Geometries.Point, double>();
+            DMesh3 meshCollection = new DMesh3();
+            DCurve3[][] meshEdge = new DCurve3[OriginalData.Length][];
+            for (int i = 0; i < OriginalData.Length; i++)
+            {
+                var meshSrf = BoundarySrfFromPts(OriginalData[i], out NTS.Geometries.Point centerPt, out double meshArea);
+                //var meshExtruded = ExtrudeMeshFromMesh(meshSrf, height[i]); 
+                var meshExtruded = ExtrudeMeshEdge(meshSrf, height[i]);
+                meshEdge[i] = ExtractEdge(OriginalData[i],height[i]);
+
+                MeshEditor.Append(meshCollection, meshExtruded);
+                var triAreaList = new List<double>(meshExtruded.TriangleCount);
+                for (int j = 0; j < meshExtruded.TriangleCount; j++)
+                {
+                    triAreaList.Add(meshExtruded.GetTriArea(j));
+                }
+                var tempArea = triAreaList.Sum() - meshArea * 2;
+
+                if (temp_centerPtDic.ContainsKey(centerPt))
+                {
+                    var tempAreaInDic = temp_centerPtDic[centerPt];
+                    temp_centerPtDic[centerPt] = tempArea + tempAreaInDic;
+                }
+                else
+                    temp_centerPtDic.Add(centerPt, tempArea);
+            }
+            edges = meshEdge;
             centerPtDic = temp_centerPtDic;
             return meshCollection;
         }
@@ -382,6 +417,7 @@ namespace UrbanX.Application.Geometry
             }
             return meshCollection;
         }
+        
         /// <summary>
         /// Create mesh from a list of points
         /// </summary>
@@ -426,7 +462,6 @@ namespace UrbanX.Application.Geometry
             centerPt = new NTS.Geometries.Point(meshResult.CachedBounds.Center.x, meshResult.CachedBounds.Center.y);
             return meshResult;
         }
-
         public static DMesh3 BoundarySrfFromPts(Vector3d[] vectorListInput, out NTS.Geometries.Point centerPt, out double meshArea)
         {
             // Use the triangulator to get indices for creating triangles
@@ -465,6 +500,13 @@ namespace UrbanX.Application.Geometry
         public static DMesh3 ExtrudeMeshEdge(DMesh3 mesh, double height)
         {
             var meshResult = mesh;
+            var removeCount = mesh.TriangleCount;
+
+            var removeIndex = new int[removeCount];
+            for (int i = 0; i < removeCount; i++)
+                removeIndex[i] = i;
+
+
             MeshBoundaryLoops loops = new MeshBoundaryLoops(mesh);
             EdgeLoop eLoop = new EdgeLoop(mesh);
             eLoop.Edges = loops[0].Edges;
@@ -473,9 +515,10 @@ namespace UrbanX.Application.Geometry
             {
                 PositionF = (v, n, vid) => v + height * Vector3d.AxisZ
             }.Extrude();
-
+            var debug = meshResult.Triangles();
             //MeshLoopClosure meshClose = new MeshLoopClosure(mesh, eLoop);
             //meshClose.Close_Flat();
+            MeshEditor.RemoveTriangles(meshResult, removeIndex);
             return meshResult;
         }
 
@@ -573,6 +616,30 @@ namespace UrbanX.Application.Geometry
         }
 
         #region 002_Remesher_001_Plankton
+
+        public static PlanktonMesh ReMeshHardEdge( DMesh3 meshIn, int Subdivisions, bool HardBoundaries = true, bool StellateAll = false, double tol = 0.01)
+        {
+            DMesh3 source = new DMesh3(meshIn);
+
+            var Anchors = new List<Vector3d>();
+            var SetCreases = ExtractEdge(source);
+            var TargetCreases = new List<DCurve3>();
+            var HardCreases = new List<bool>() { true };
+
+            return ReMesh(1, source.g3Mesh2pMesh(),Subdivisions,Anchors,SetCreases,TargetCreases,HardCreases) ;
+        }
+
+        public static PlanktonMesh ReMeshHardEdge(DMesh3 meshIn, DCurve3[] meshEdge, int Subdivisions, bool HardBoundaries = true, bool StellateAll = false, double tol = 0.01)
+        {
+            DMesh3 source = new DMesh3(meshIn);
+
+            var Anchors = new List<Vector3d>();
+            var SetCreases = meshEdge.ToList() ;
+            var TargetCreases = new List<DCurve3>();
+            var HardCreases = new List<bool>() { true};
+
+            return ReMesh(1, source.g3Mesh2pMesh(), Subdivisions, Anchors, SetCreases, TargetCreases, HardCreases);
+        }
         public static PlanktonMesh ReMesh(int Algorithm, PlanktonMesh ip, int Subdivisions,  List<Vector3d> Anchors, List<DCurve3> SetCreases, List<DCurve3> TargetCreases,List<bool> HardCreases, bool HardBoundaries=true, bool StellateAll=false, double tol=0.01)
         {
             PlanktonMesh P = new PlanktonMesh(ip);
@@ -628,6 +695,9 @@ namespace UrbanX.Application.Geometry
             }
 
             var CreaseCheck = new List<int>();
+            var debugBoundary = new List<bool>();
+            var disList = new double[P.Vertices.Count][];
+            var ptList = new Vector3d[P.Vertices.Count][];
 
             for (int v = 0; v < P.Vertices.Count; v++)
             {
@@ -638,6 +708,7 @@ namespace UrbanX.Application.Geometry
                 bool IsBoundary = P.Vertices.IsBoundary(v);
                 var CreaseIdc = new List<int>();
 
+                debugBoundary.Add(IsBoundary);
                 //check if a vertex is on a boundary
                 if (IsBoundary)
                 {
@@ -658,11 +729,17 @@ namespace UrbanX.Application.Geometry
                     }
                 }
 
+
                 //check vertices for crease adjacency
+
+                disList[v] = new double[SetCreases.Count];
+                ptList[v] = new Vector3d[SetCreases.Count];
                 for (int c = 0; c < SetCreases.Count; c++)
                 {
-                    SetCreases[c].ClosestPoint(ThisPosition, out int SegIndex01, out double Ct);
-                    if (ThisPosition.Distance(SetCreases[c].PointAt(SegIndex01,Ct))<tol)
+                    var tempPt01=SetCreases[c].ClosestPoint(ThisPosition, out int SegIndex01, out double Ct);
+                    //disList[v][c]=ThisPosition.Distance(tempPt01);
+                    //ptList[v][c]=tempPt01;
+                    if (ThisPosition.Distance(tempPt01) <tol)
                     {
                         CreaseIdc.Add(c);
                         if (!IsAnchor)
@@ -670,8 +747,8 @@ namespace UrbanX.Application.Geometry
                             IsAnchor = HardCreases[c];
                             if (IsAnchor)
                             {
-                                TargetCreases[c].ClosestPoint(ThisPosition, out int SegIndex02, out double Pt);
-                                P.Vertices.SetVertex(v, TargetCreases[c].PointAt(SegIndex02, Pt));
+                                var tempPt02=TargetCreases[c].ClosestPoint(ThisPosition, out int SegIndex02, out double Pt);
+                                P.Vertices.SetVertex(v, tempPt02);
                             }
                         }
                     }
@@ -776,8 +853,9 @@ namespace UrbanX.Application.Geometry
                         Vector3d PulledPosition = new Vector3d();
                         foreach (int PullCrease in PullCreases)
                         {
-                            Creases[PullCrease].ClosestPoint(NewPosition, out int crtIndex, out double t);
-                            PulledPosition += Creases[PullCrease].PointAt(crtIndex, t) / PullCreases.Count;
+                            var tempPt01=Creases[PullCrease].ClosestPoint(NewPosition, out int crtIndex, out double t);
+                            //PulledPosition += Creases[PullCrease].PointAt(crtIndex, t) / PullCreases.Count;
+                            PulledPosition += tempPt01 / PullCreases.Count;
                         }
                         NewPosition = PulledPosition;
                     }
@@ -825,7 +903,7 @@ namespace UrbanX.Application.Geometry
             }
 
             // cycle through each halfedge pair to set odd vertices
-            for (int HE = 0; HE <P.Halfedges.Count; HE++)
+            for (int HE = 0; HE <P.Halfedges.Count; HE+=2)
             {
                 int Pair = P.Halfedges.GetPairHalfedge(HE);
                 int ThisOpp = P.Halfedges[HE].PrevHalfedge;
@@ -865,8 +943,9 @@ namespace UrbanX.Application.Geometry
                         {
                             if (HardCreases[ThisCrease])
                             {
-                                Creases[ThisCrease].ClosestPoint(NewPosition, out int CrvIndex, out double t);
-                                NewPosition = Creases[ThisCrease].PointAt(CrvIndex,t);
+                                var tempPt01=Creases[ThisCrease].ClosestPoint(NewPosition, out int CrvIndex, out double t);
+                                //NewPosition = Creases[ThisCrease].PointAt(CrvIndex,t);
+                                NewPosition = tempPt01;
                             }
                         }
                         Solved = true;
@@ -935,6 +1014,32 @@ namespace UrbanX.Application.Geometry
 
         }
 
+        private static List<DCurve3> ExtractEdge(DMesh3 meshIn)
+        {
+            var edges = meshIn.BoundaryEdgeIndices().ToList();
+            var count = edges.Count;
+            var crvList = new List<DCurve3>(count);
+
+            for (int i = 0; i < count; i++)
+            {
+                var edge = meshIn.GetEdge(edges[i]);
+                crvList.Add(new DCurve3(new Vector3d[] { meshIn.GetVertex(edge.a), meshIn.GetVertex(edge.b) }, false));
+                
+            }
+            return crvList;
+        }
+
+        private static DCurve3[] ExtractEdge(Vector3d[] pts, double height)
+        {
+            var count = pts.Length;
+            var result = new DCurve3[count-1];
+            for (int i = 0; i < count-1; i++)
+            {
+                var pt = pts[i];
+                result[i]=new DCurve3(new Vector3d[] { pt, new Vector3d(pt.x, pt.y, height) },false);
+            }
+            return result;
+        }
         private static Interval1d ReMap(Interval1d orginInter,Interval1d newInter)
         {
             return new Interval1d(orginInter.a / orginInter.b, 1);
@@ -1314,10 +1419,135 @@ namespace UrbanX.Application.Geometry
         {
             return new Vector3d(NTSPt.X, NTSPt.Y, NTSPt.Z);
         }
+
+        #endregion
+
+        #region RhinoMesh
+        public static Rh.Mesh ConvertFromDMesh3(DMesh3 meshInput)
+        {
+            Rh.Mesh meshOutput = new Rh.Mesh();
+
+            var tempMeshInputVertices = meshInput.Vertices().ToArray();
+            var rhVerticesList = ConvertFromDMeshVector(tempMeshInputVertices);
+            var rhFacesList = ConvertFromDMeshTri(meshInput.Triangles().ToArray());
+
+            meshOutput.Vertices.AddVertices(rhVerticesList);
+            meshOutput.Faces.AddFaces(rhFacesList);
+
+            for (int i = 0; i < tempMeshInputVertices.Length; i++)
+            {
+                meshOutput.VertexColors.Add(ConvertFromDMeshColor(meshInput.GetVertexColor(i)));
+            }
+
+            meshOutput.Faces.ConvertTrianglesToQuads(0.034907, 0.875);
+            return meshOutput;
+
+        }
+
+        public static Rh.Mesh ConvertFromDMesh3NoColor(DMesh3 meshInput)
+        {
+            Rh.Mesh meshOutput = new Rh.Mesh();
+
+            var tempMeshInputVertices = meshInput.Vertices().ToArray();
+            var rhVerticesList = ConvertFromDMeshVector(tempMeshInputVertices);
+            var rhFacesList = ConvertFromDMeshTri(meshInput.Triangles().ToArray());
+
+            meshOutput.Vertices.AddVertices(rhVerticesList);
+            meshOutput.Faces.AddFaces(rhFacesList);
+
+            return meshOutput;
+        }
+
+        private static Rh.Point3d[] ConvertFromDMeshVector(Vector3d[] meshVertices)
+        {
+            Rh.Point3d[] ptResult = new Rh.Point3d[meshVertices.Length];
+            for (int i = 0; i < meshVertices.Length; i++)
+            {
+                ptResult[i] = new Rh.Point3d(meshVertices[i].x, meshVertices[i].y, meshVertices[i].z);
+            }
+            return ptResult;
+        }
+
+        private static Rh.MeshFace[] ConvertFromDMeshTri(Index3i[] meshTri)
+        {
+            Rh.MeshFace[] meshResult = new Rh.MeshFace[meshTri.Length];
+            for (int i = 0; i < meshTri.Length; i++)
+            {
+                meshResult[i] = new Rh.MeshFace(meshTri[i].a, meshTri[i].b, meshTri[i].c);
+            }
+            return meshResult;
+        }
+
+        public static Color ConvertFromDMeshColor(Vector3f vertexColor)
+        {
+            var tempColor = ConvertColorValueBasedFloat(vertexColor.x, vertexColor.y, vertexColor.z);
+            return Color.FromArgb(tempColor[0], tempColor[1], tempColor[2]);
+        }
+
+        public static Color ConvertFromDMeshColor(Colorf colorf)
+        {
+            var tempColor = ConvertColorValueBasedFloat(colorf.r, colorf.g, colorf.b);
+            return Color.FromArgb(tempColor[0], tempColor[1], tempColor[2]);
+        }
+        private static int[] hsb2rgb(float h, float s, float v)
+        {
+            float r = 0, g = 0, b = 0;
+            int i = (int)((h / 60) % 6);
+            float f = (h / 60) - i;
+            float p = v * (1 - s);
+            float q = v * (1 - f * s);
+            float t = v * (1 - (1 - f) * s);
+            switch (i)
+            {
+                case 0:
+                    r = v;
+                    g = t;
+                    b = p;
+                    break;
+                case 1:
+                    r = q;
+                    g = v;
+                    b = p;
+                    break;
+                case 2:
+                    r = p;
+                    g = v;
+                    b = t;
+                    break;
+                case 3:
+                    r = p;
+                    g = q;
+                    b = v;
+                    break;
+                case 4:
+                    r = t;
+                    g = p;
+                    b = v;
+                    break;
+                case 5:
+                    r = v;
+                    g = p;
+                    b = q;
+                    break;
+                default:
+                    break;
+            }
+            return new int[] { (int) (r * 255.0), (int) (g * 255.0),
+            (int) (b * 255.0) };
+        }
+
+        private static int[] ConvertColorValueBasedFloat(float r, float g, float b)
+        {
+            int[] colorResult = new int[3];
+            colorResult[0] = Math.Max(0, Math.Min(255, (int)Math.Floor(r * 256.0)));
+            colorResult[1] = Math.Max(0, Math.Min(255, (int)Math.Floor(g * 256.0)));
+            colorResult[2] = Math.Max(0, Math.Min(255, (int)Math.Floor(b * 256.0)));
+            return colorResult;
+        }
         #endregion
 
         #region PlanktonMesh
-        
+
 
         public static NTS.Geometries.Point PMeshVertex2NTSPt(PlanktonVertex ptIn)
         {

@@ -884,23 +884,26 @@ namespace UrbanX.Application
 
             ////创建mesh simple，输出中心点与面积
 
-            var simpleMesh = MeshCreation.ExtrudeMeshFromPtMinusTopBtn(inputDataCollection, heightCollection, out Dictionary<NetTopologySuite.Geometries.Point, double> secPtDic);
+            var simpleMesh = MeshCreation.ExtrudeMeshFromPtMinusTopBtn(inputDataCollection, heightCollection, out Dictionary<NetTopologySuite.Geometries.Point, double> secPtDic, out DCurve3[][] edges);
+            ToolManagers.TimeCalculation(start, "挤出模型");
             //var simpleMesh = MeshCreation.BoundarySrfFromPts(inputDataCollection[0]);
             //var fc = MeshCreation.BuildFeatureCollection(secPtDic.Keys.ToArray(), secPtDic.Values.ToArray());
             //MeshCreation.ExportGeoJSON(fc, tempExportPath);
             MeshCreation.ExportMeshAsObj(exportPathSmallBox, simpleMesh);
+            ToolManagers.TimeCalculation(start, "输出模型");
 
-            var Anchors = new List<Vector3d>();
-            var SetCreases = new List<DCurve3>();
-            var TargetCreases = new List<DCurve3>();
-            var HardCreases = new List<bool>();
             //创建细分mesh
-            var pMesh = simpleMesh.g3Mesh2pMesh();
-            //var remeshedMesh = MeshCreation.ReMesh(0, pMesh, 1, Anchors, SetCreases, TargetCreases,HardCreases);
+            //var pMesh = simpleMesh.ToPlanktonMesh(start);
+            var remeshedMesh = MeshCreation.ReMeshHardEdge(simpleMesh,edges[0], 3);
+            //var Anchors = new List<Vector3d>();
+            //var SetCreases = new List<DCurve3>();
+            //var TargetCreases = new List<DCurve3>();
+            //var HardCreases = new List<bool>() { true };
+            //var remeshedMesh = MeshCreation.ReMesh(1, simpleMesh.g3Mesh2pMesh(), 3,Anchors,SetCreases,TargetCreases,HardCreases);
             ToolManagers.TimeCalculation(start, "细分");
 
             ////输出细分Mesh
-            var exportedMesh = pMesh.pMesh2g3Mesh();
+            var exportedMesh = remeshedMesh.pMesh2g3Mesh();
             MeshCreation.ExportMeshAsObj(exportPath, exportedMesh, false);
             ToolManagers.TimeCalculation(start, "输出模型");
             #endregion
@@ -962,9 +965,6 @@ namespace UrbanX.Application
             sw.Close();
             fs.Close();
         }
-
-
-
     }
 }
 
