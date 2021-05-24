@@ -197,6 +197,9 @@ namespace UrbanX.Application.Geometry
 
         public static void ExportGeoJSON(FeatureCollection fc, string outputPath)
         {
+            if (File.Exists(outputPath))
+                File.Delete(outputPath);
+
             GeoJsonWriter writer = new GeoJsonWriter();
             var outputString = writer.Write(fc);
             using (StreamWriter sw = new StreamWriter(outputPath, true))
@@ -1107,20 +1110,25 @@ namespace UrbanX.Application.Geometry
         #endregion
 
         #region 003_Intersection
-        public static void GetTri(DMesh3 meshIn, NTS.Geometries.Point[] ptArray, double viewRange, out Dictionary<int, int> MeshIntrCountDic)
+        public static List<double> CalcRaysThroughTri(DMesh3 meshIn, NTS.Geometries.Point[] ptArray, double viewRange, Dictionary<int, double> areaDic, out Dictionary<int, int> MeshIntrCountDic)
         {
             DMesh3 mesh = new DMesh3(meshIn);
             var count = mesh.TriangleCount;
-            var viewPtList = NTSPtList2Vector3dList_3d(ptArray);
+            //var viewPtList = NTSPtList2Vector3dList_3d(ptArray);
             DMeshAABBTree3 spatial = new DMeshAABBTree3(mesh);
             spatial.Build();
 
-            Dictionary<int, int> meshIntrCountDic = new Dictionary<int, int>();
-            Dictionary<int, int> viewPtIntrCountDic = new Dictionary<int, int>();
+            Dictionary<int, int> meshIntrCountDic = new Dictionary<int, int>();// meshVertex Index, hit count
+            Dictionary<int, double> viewPtIntrAreaDic = new Dictionary<int, double>();//viewPoint Index, hit mesh area
+
+            NTS.Index.Quadtree.Quadtree<NTS.Geometries.Point> quadTree = new NTS.Index.Quadtree.Quadtree<NTS.Geometries.Point>();
+            for (int i = 0; i < ptArray.Length; i++)
+                quadTree.Insert(ptArray[i].EnvelopeInternal, ptArray[i]);
 
             for (int meshIndex = 0; meshIndex < count; meshIndex++)
             {
                 var trisNormals = -mesh.GetTriNormal(meshIndex);
+                var triArea = mesh.GetTriArea(meshIndex);
                 //debugNormalList.Add(trisNormals);
                 if (trisNormals.z == 1d || trisNormals.z == -1d)
                     continue;
@@ -1130,6 +1138,20 @@ namespace UrbanX.Application.Geometry
                 int[] indexList = new int[3] { vertexList.a, vertexList.b, vertexList.c };
 
                 //To Do 用NTS进行四叉树索引
+                var centroid4Tree = centroid.toNTSPt();
+                var mainCoor = new NTS.Geometries.Coordinate(centroid4Tree.X, centroid4Tree.Y);
+                var tempEnv = Poly2DCreation.CreateEnvelopeFromPt(centroid4Tree, viewRange);
+                var secPtListQuery = quadTree.Query(tempEnv);
+                List<Vector3d> viewPtList = new List<Vector3d>();
+                for (int j = 0; j < secPtListQuery.Count; j++)
+                {
+                    var secPt = secPtListQuery[j];
+                    NTS.Geometries.Coordinate secCoor = new NTS.Geometries.Coordinate(secPt.X, secPt.Y);
+                    double dis = mainCoor.Distance(secCoor);
+                    if (dis < viewRange)
+                        viewPtList.Add(secPt.tog3Pt());
+                }
+                
                 for (int viewPtIndex = 0; viewPtIndex < viewPtList.Count; viewPtIndex++)
                 {
                     var direction = viewPtList[viewPtIndex]- centroid;
@@ -1159,6 +1181,11 @@ namespace UrbanX.Application.Geometry
                             //double intrDistance=ray.PointAt(rayT).Distance(viewPtList[viewPtIndex]);
                             if (Math.Abs(intr.RayParameter - distance)<0.0001)
                             {
+                                if (viewPtIntrAreaDic.ContainsKey(viewPtIndex))
+                                    viewPtIntrAreaDic[viewPtIndex] += triArea;
+                                else
+                                    viewPtIntrAreaDic.Add(viewPtIndex, triArea);
+
                                 for (int vertexIndex = 0; vertexIndex < 3; vertexIndex++)
                                 {
                                     if (meshIntrCountDic.ContainsKey(indexList[vertexIndex]))
@@ -1170,10 +1197,7 @@ namespace UrbanX.Application.Geometry
                                         meshIntrCountDic.Add(indexList[vertexIndex], 1);
                                     }
                                 }
-
                             }
-
-
                         }
                         #endregion
 
@@ -1181,7 +1205,21 @@ namespace UrbanX.Application.Geometry
                 }
             }
 
+            var visRatio =new List<double>(areaDic.Count);
+            for (int i = 0; i < areaDic.Count; i++) {
+                if (!viewPtIntrAreaDic.ContainsKey(i))
+                {
+                    visRatio.Add(0d);
+                }
+                else
+                {
+                    visRatio.Add(viewPtIntrAreaDic[i] / areaDic[i]);
+                }                
+            }
+                
+
             MeshIntrCountDic = meshIntrCountDic;
+            return visRatio;
         }
 
         public static Dictionary<int, int> CalcRays(DMesh3 mesh, Vector3d origin, int segmentHeight = 10, int segment = 10, double angle = 360, double radius = 100, double angleHeight = 90)
@@ -1286,7 +1324,7 @@ namespace UrbanX.Application.Geometry
             //return hitTrianglesDic;
         }
 
-        public static double[] CalcRaysGetArea(DMesh3 mesh, IEnumerable<Vector3d> originList, int segmentHeight = 10, int segment = 10, double angle = 360, double radius = 100, double angleHeight = 90)
+        public static double[] CalcRaysThroughPt(DMesh3 mesh, IEnumerable<Vector3d> originList, int segmentHeight = 10, int segment = 10, double angle = 360, double radius = 100, double angleHeight = 90)
         {
             DMesh3 meshIn = new DMesh3(mesh);
             DMeshAABBTree3 spatial = new DMeshAABBTree3(meshIn);
@@ -1639,5 +1677,49 @@ namespace UrbanX.Application.Geometry
             IsAnchor = SetAnchor;
             IsBoundary = SetBoundary;
         }
+    }
+
+    public class ViewPt
+    {
+        private double _wholeArea { get; set; }
+        private double _viewArea { get; set; }
+        
+        private int _index;
+        public int Index
+        {
+            get { return _index; }
+            set { _index = value; }
+        }
+        public NTS.Geometries.Point _pt{ get; set; }
+
+        private double _viewRatio;
+        public double ViewRatio
+        {
+            get { 
+                return _viewRatio; 
+            }
+            set {
+                if (_wholeArea != 0)
+                    _viewRatio = _viewArea / _wholeArea;
+                else
+                    _viewRatio = 0;
+            }
+        }
+
+        public ViewPt(NTS.Geometries.Point point, int index, double viewArea, double wholeArea)
+        {
+            _pt = point;
+            _index = index;
+            _wholeArea = wholeArea;
+            _viewArea = viewArea;
+        }
+
+        public ViewPt(NTS.Geometries.Point point, int index, double wholeArea)
+        {
+            _pt = point;
+            _index = index;
+            _wholeArea = wholeArea;
+        }
+
     }
 }

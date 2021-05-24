@@ -6,6 +6,7 @@ using System.Linq;
 using System.Diagnostics.CodeAnalysis;
 using Rh = Rhino.Geometry;
 using UrbanX.Application;
+using NTS = NetTopologySuite;
 
 namespace Urbanx.Application.Geometry.Extension
 {
@@ -909,6 +910,21 @@ namespace Urbanx.Application.Geometry.Extension
                 y = Y;
                 z = Z;
             }
+        }
+
+        public static NTS.Geometries.Point toNTSPt(NTS.Geometries.Coordinate data)
+        {
+            return new NTS.Geometries.Point(data);
+        }
+
+        public static NTS.Geometries.Point toNTSPt(this g3.Vector3d data)
+        {
+            return new NTS.Geometries.Point(data.x,data.y,data.z);
+        }
+
+        public static Vector3d tog3Pt(this NTS.Geometries.Point pt)
+        {
+            return new Vector3d(pt.X, pt.Y, pt.Z);
         }
     }
 }

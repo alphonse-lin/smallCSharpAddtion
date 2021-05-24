@@ -8,6 +8,7 @@ using UrbanXX.IO.GeoJSON;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.Operation.Predicate;
 using NetTopologySuite.Index;
+using NetTopologySuite.Features;
 using System.Linq;
 
 namespace UrbanX.Application.Geometry
@@ -55,10 +56,11 @@ namespace UrbanX.Application.Geometry
 
         public static Coordinate[][] ReadJsonData2D(string jsonFilePath)
         {
+
+
             StreamReader sr = File.OpenText(jsonFilePath);
             var feactureCollection = GeoJsonReader.GetFeatureCollectionFromJson(sr.ReadToEnd());
             Coordinate[][] polygonResult = new Coordinate[feactureCollection.Count][];
-
             for (int i = 0; i < feactureCollection.Count; i++)
             {
                 //读取数据
@@ -66,7 +68,35 @@ namespace UrbanX.Application.Geometry
                 polygonResult[i] = jsonDic.Coordinates;
             }
             return polygonResult;
-            
+        }
+
+        public static FeatureCollection BuildFeatureCollection(NTS.Geometries.Geometry[] geosInfo)
+        {
+            var fc = new FeatureCollection();
+            for (int i = 0; i < geosInfo.Length; i++)
+            {
+                AttributesTable att = new AttributesTable
+                {
+                };
+                Feature f = new Feature(geosInfo[i], att);
+                fc.Add(f);
+            }
+            return fc;
+        }
+
+        public static FeatureCollection BuildFeatureCollection(NTS.Geometries.Geometry[] geosInfo, double[] data)
+        {
+            var fc = new FeatureCollection();
+            for (int i = 0; i < geosInfo.Length; i++)
+            {
+                AttributesTable att = new AttributesTable
+                {
+                    { "data", data[i]}
+                };
+                Feature f = new Feature(geosInfo[i], att);
+                fc.Add(f);
+            }
+            return fc;
         }
 
         /// <summary>
@@ -160,6 +190,42 @@ namespace UrbanX.Application.Geometry
             return secPtListCollection;
         }
 
+        public static Dictionary<int, double> ContainsAreaInPts(NTS.Geometries.Point[] mainPtList, NTS.Geometries.Point[] secPtList, Dictionary<NTS.Geometries.Point, double> ptAreaDic, double radius = 300)
+        {
+            NTS.Index.Quadtree.Quadtree<NTS.Geometries.Point> quadTree = new NTS.Index.Quadtree.Quadtree<NTS.Geometries.Point>();
+            for (int i = 0; i < secPtList.Length; i++)
+                quadTree.Insert(secPtList[i].EnvelopeInternal, secPtList[i]);
+
+            List<List<NTS.Geometries.Point>> secPtListCollection = new List<List<NTS.Geometries.Point>>(mainPtList.Length);
+            for (int i = 0; i < mainPtList.Length; i++)
+            {
+                var mainCoor = new Coordinate(mainPtList[i].X, mainPtList[i].Y);
+                var tempEnv = CreateEnvelopeFromPt(mainPtList[i], radius);
+                var secPtListQuery = quadTree.Query(tempEnv);
+
+                List<NTS.Geometries.Point> secPtContain = new List<NTS.Geometries.Point>();
+                for (int j = 0; j < secPtListQuery.Count; j++)
+                {
+                    var secPt = secPtListQuery[j];
+
+                    Coordinate secCoor = new Coordinate(secPt.X, secPt.Y);
+                    double dis = mainCoor.Distance(secCoor);
+                    if (dis < radius)
+                        secPtContain.Add(secPt);
+                }
+                secPtListCollection.Add(secPtContain);
+            }
+
+            var wholeArea = ContainsAreaInPts(secPtListCollection, ptAreaDic);
+            Dictionary<int, double> ptWholeAreaDic = new Dictionary<int, double>();
+            for (int i = 0; i < mainPtList.Length; i++)
+            {
+                ptWholeAreaDic.Add(i, wholeArea[i]);
+            }
+
+            return ptWholeAreaDic;
+        }
+
         //TODO 划分点，输出mainPtList
         //public static NTS.Geometries.Point[] DividePolyline()
         //{
@@ -189,11 +255,25 @@ namespace UrbanX.Application.Geometry
             return areaResult;
         }
 
-        private static Envelope CreateEnvelopeFromPt(NTS.Geometries.Point origin, double radius)
+        public static Envelope CreateEnvelopeFromPt(NTS.Geometries.Point origin, double radius)
         {
             var ptLeftDown = new NTS.Geometries.Coordinate(origin.X - radius, origin.Y - radius);
             var ptRightUp = new NTS.Geometries.Coordinate(origin.X + radius, origin.Y + radius);
             return new Envelope(ptLeftDown, ptRightUp);
+        }
+
+        public static List<NTS.Geometries.Point> DivideLineString(NTS.Geometries.LineString line, double dis)
+        {
+            NTS.LinearReferencing.LengthIndexedLine index = new NTS.LinearReferencing.LengthIndexedLine(line);
+            double temp = index.EndIndex;
+            var ptList = new List<NTS.Geometries.Point>(Convert.ToInt32(Math.Floor(temp/dis)));
+            //var ptList = new List<NTS.Geometries.Point>();
+            for (double j = 0; j < temp; j += dis)
+            {
+                var pt = index.ExtractPoint(j);
+                ptList.Add(new NTS.Geometries.Point(pt.X,pt.Y, 0));
+            }
+            return ptList;
         }
     }
 }
