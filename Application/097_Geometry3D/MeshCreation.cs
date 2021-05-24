@@ -24,12 +24,13 @@ namespace UrbanX.Application.Geometry
     {
 
         #region 000_Basic Function
-        public static Vector3d[][] ReadJsonData(string jsonFilePath, string baseHeightAttribute, string heightAttribute, out double[] heightCollection)
+        public static Vector3d[][] ReadJsonData(string jsonFilePath, string baseHeightAttribute, string heightAttribute, out double[] heightCollection, out double[]baseHeightCollection)
         {
             StreamReader sr = File.OpenText(jsonFilePath);
             var feactureCollection = GeoJsonReader.GetFeatureCollectionFromJson(sr.ReadToEnd());
             Vector3d[][] vectorResult = new Vector3d[feactureCollection.Count][];
             double[] heightResult = new double[feactureCollection.Count];
+            double[] baseHeightResult = new double[feactureCollection.Count];
 
             for (int i = 0; i < feactureCollection.Count; i++)
             {
@@ -38,18 +39,20 @@ namespace UrbanX.Application.Geometry
                 int geoCount = jsonDic.Coordinates.Length;
                 vectorResult[i] = new Vector3d[geoCount];
                 var jsonDic_baseHeight = feactureCollection[i].Attributes[baseHeightAttribute];
-                var baseHeightResult = double.Parse(jsonDic_baseHeight.ToString());
+                var tempBaseHeightResult = double.Parse(jsonDic_baseHeight.ToString());
 
                 for (int num = 0; num < jsonDic.Coordinates.Length; num++)
                 {
-                    vectorResult[i][num] = new Vector3d(jsonDic.Coordinates[num].X, jsonDic.Coordinates[num].Y, baseHeightResult);
+                    vectorResult[i][num] = new Vector3d(jsonDic.Coordinates[num].X, jsonDic.Coordinates[num].Y, tempBaseHeightResult);
                 }
                 var jsonDic_height = feactureCollection[i].Attributes[heightAttribute];
 
                 heightResult[i] = double.Parse(jsonDic_height.ToString());
+                baseHeightResult[i] = tempBaseHeightResult;
             }
 
             heightCollection = heightResult;
+            baseHeightCollection = baseHeightResult;
             return vectorResult;
         }
 
@@ -110,6 +113,27 @@ namespace UrbanX.Application.Geometry
             }
 
             attributeData = tempResult;
+            return ptResult;
+        }
+
+        public static NTS.Geometries.Point[] ReadJsonData(string jsonFilePath, string attribute, out Dictionary<NTS.Geometries.Point, double> attributeData)
+        {
+            StreamReader sr = File.OpenText(jsonFilePath);
+            var feactureCollection = GeoJsonReader.GetFeatureCollectionFromJson(sr.ReadToEnd());
+            NTS.Geometries.Point[] ptResult = new NTS.Geometries.Point[feactureCollection.Count];
+            double[] tempResult = new double[feactureCollection.Count];
+            Dictionary<NTS.Geometries.Point, double> geoDic = new Dictionary<NTS.Geometries.Point, double>();
+
+            for (int i = 0; i < feactureCollection.Count; i++)
+            {
+                //读取数据
+                var jsonDic = feactureCollection[i].Geometry;
+                ptResult[i] = new NTS.Geometries.Point(jsonDic.Coordinate.X, jsonDic.Coordinate.Y, jsonDic.Coordinate.Z);
+                var jsonDic_data = feactureCollection[i].Attributes[attribute];
+                geoDic.Add(ptResult[i], double.Parse(jsonDic_data.ToString()));
+            }
+
+            attributeData = geoDic;
             return ptResult;
         }
 
@@ -181,7 +205,6 @@ namespace UrbanX.Application.Geometry
                 sw.Flush();
             }
         }
-
 
         public static void ExportMeshAsObj(string path, DMesh3 mesh, bool color = false)
         {
@@ -346,7 +369,7 @@ namespace UrbanX.Application.Geometry
             return meshCollection;
         }
 
-        public static DMesh3 ExtrudeMeshFromPtMinusTopBtn(Vector3d[][] OriginalData, double[] height, out Dictionary<NTS.Geometries.Point, double> centerPtDic, out DCurve3[][] edges)
+        public static DMesh3 ExtrudeMeshFromPtMinusTopBtn(Vector3d[][] OriginalData, double[] height, double[] baeHeight, out Dictionary<NTS.Geometries.Point, double> centerPtDic, out DCurve3[][] edges)
         {
             Dictionary<NTS.Geometries.Point, double> temp_centerPtDic = new Dictionary<NTS.Geometries.Point, double>();
             DMesh3 meshCollection = new DMesh3();
@@ -356,7 +379,7 @@ namespace UrbanX.Application.Geometry
                 var meshSrf = BoundarySrfFromPts(OriginalData[i], out NTS.Geometries.Point centerPt, out double meshArea);
                 //var meshExtruded = ExtrudeMeshFromMesh(meshSrf, height[i]); 
                 var meshExtruded = ExtrudeMeshEdge(meshSrf, height[i]);
-                meshEdge[i] = ExtractEdge(OriginalData[i],height[i]);
+                meshEdge[i] = ExtractEdge(OriginalData[i],height[i], baeHeight[i]);
 
                 MeshEditor.Append(meshCollection, meshExtruded);
                 var triAreaList = new List<double>(meshExtruded.TriangleCount);
@@ -373,6 +396,41 @@ namespace UrbanX.Application.Geometry
                 }
                 else
                     temp_centerPtDic.Add(centerPt, tempArea);
+            }
+            edges = meshEdge;
+            centerPtDic = temp_centerPtDic;
+            return meshCollection;
+        }
+
+        public static DMesh3[] ExtrudeMeshListFromPtMinusTopBtn(Vector3d[][] OriginalData, double[] height,double[] baseHeight, out Dictionary<NTS.Geometries.Point, double> centerPtDic, out DCurve3[][] edges)
+        {
+            Dictionary<NTS.Geometries.Point, double> temp_centerPtDic = new Dictionary<NTS.Geometries.Point, double>();
+            DMesh3[] meshCollection = new DMesh3[OriginalData.Length];
+            DCurve3[][] meshEdge = new DCurve3[OriginalData.Length][];
+            for (int i = 0; i < OriginalData.Length; i++)
+            {
+                DMesh3 tempMesh = new DMesh3();
+                var meshSrf = BoundarySrfFromPts(OriginalData[i], out NTS.Geometries.Point centerPt, out double meshArea);
+                //var meshExtruded = ExtrudeMeshFromMesh(meshSrf, height[i]); 
+                var meshExtruded = ExtrudeMeshEdge(meshSrf, height[i]);
+                meshEdge[i] = ExtractEdge(OriginalData[i], baseHeight[i], height[i]);
+
+                MeshEditor.Append(tempMesh, meshExtruded);
+                meshCollection[i]= tempMesh;
+                var triAreaList = new List<double>(meshExtruded.TriangleCount);
+                for (int j = 0; j < meshExtruded.TriangleCount; j++)
+                {
+                    triAreaList.Add(meshExtruded.GetTriArea(j));
+                }
+                var tempArea = triAreaList.Sum();
+
+                if (temp_centerPtDic.ContainsKey(centerPt))
+                {
+                    var tempAreaInDic = temp_centerPtDic[centerPt];
+                    temp_centerPtDic[centerPt] = tempArea + tempAreaInDic;
+                }
+                else
+                { temp_centerPtDic.Add(centerPt, tempArea); }
             }
             edges = meshEdge;
             centerPtDic = temp_centerPtDic;
@@ -505,7 +563,6 @@ namespace UrbanX.Application.Geometry
             var removeIndex = new int[removeCount];
             for (int i = 0; i < removeCount; i++)
                 removeIndex[i] = i;
-
 
             MeshBoundaryLoops loops = new MeshBoundaryLoops(mesh);
             EdgeLoop eLoop = new EdgeLoop(mesh);
@@ -1029,14 +1086,14 @@ namespace UrbanX.Application.Geometry
             return crvList;
         }
 
-        private static DCurve3[] ExtractEdge(Vector3d[] pts, double height)
+        private static DCurve3[] ExtractEdge(Vector3d[] pts, double baseHeight, double height)
         {
             var count = pts.Length;
             var result = new DCurve3[count-1];
             for (int i = 0; i < count-1; i++)
             {
                 var pt = pts[i];
-                result[i]=new DCurve3(new Vector3d[] { pt, new Vector3d(pt.x, pt.y, height) },false);
+                result[i]=new DCurve3(new Vector3d[] { new Vector3d(pt.x, pt.y, baseHeight), new Vector3d(pt.x, pt.y, baseHeight+height) },false);
             }
             return result;
         }
@@ -1085,7 +1142,6 @@ namespace UrbanX.Application.Geometry
 
                     //debugAngleList.Add(angle);
                     //debugDistanceList.Add(distance);
-                    
 
                     if (angle > 0 && distance < viewRange)
                     {
