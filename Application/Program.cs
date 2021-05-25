@@ -1040,10 +1040,10 @@ namespace UrbanX.Application
             var ptLargeList = new List<NetTopologySuite.Geometries.Point>() {
                 //new  NetTopologySuite.Geometries.Point(532.328125,1102.745167,0),
                 new  NetTopologySuite.Geometries.Point(0,0,0),
-                //new  NetTopologySuite.Geometries.Point(100,100,0),
-                //new  NetTopologySuite.Geometries.Point(200,200,0),
-                //new  NetTopologySuite.Geometries.Point(300,300,0),
-                //new  NetTopologySuite.Geometries.Point(400,400,0),
+                new  NetTopologySuite.Geometries.Point(100,100,0),
+                new  NetTopologySuite.Geometries.Point(200,200,0),
+                new  NetTopologySuite.Geometries.Point(300,300,0),
+                new  NetTopologySuite.Geometries.Point(400,400,0),
             };
             ToolManagers.TimeCalculation(start, "初始化点数据");
 
@@ -1062,7 +1062,7 @@ namespace UrbanX.Application
             ToolManagers.TimeCalculation(start, "初始化颜色");
 
             //开始相切
-            var visPercentage = MeshCreation.CalcRaysThroughTri(loadedMesh, ptLargeList.ToArray(), viewRadius, ptAreaDic, VisDataType.VisRatio, out Dictionary<int, int> meshIntrDic);
+            var visPercentage = MeshCreation.CalcRaysThroughTriParallel(loadedMesh, ptLargeList.ToArray(), viewRadius, wholeAreaDic, VisDataType.VisRatio, start, out ConcurrentDictionary<int, int> meshIntrDic);
             ToolManagers.TimeCalculation(start, "相切，并计算比例");
 
             ////上颜色

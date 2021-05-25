@@ -1296,8 +1296,8 @@ namespace UrbanX.Application.Geometry
                     var secPt = secPtListQuery[j];
                     NTS.Geometries.Coordinate secCoor = new NTS.Geometries.Coordinate(secPt.X, secPt.Y);
                     double dis = mainCoor.Distance(secCoor);
-                    if (dis < viewRange)
-                        viewPtList.Add(secPt.tog3Pt());
+                    //if (dis < viewRange)
+                    viewPtList.Add(secPt.tog3Pt());
                 }
                 //ToolManagers.TimeCalculation(start, $"{meshIndex} 四叉树排除点");
 
@@ -1433,8 +1433,8 @@ namespace UrbanX.Application.Geometry
                     var secPt = secPtListQuery[j];
                     NTS.Geometries.Coordinate secCoor = new NTS.Geometries.Coordinate(secPt.X, secPt.Y);
                     double dis = mainCoor.Distance(secCoor);
-                    if (dis < viewRange)
-                        viewPtList.Add(new NTS.Geometries.Point(secPt).tog3Pt());
+                    //if (dis < viewRange)
+                    viewPtList.Add(new NTS.Geometries.Point(secPt).tog3Pt());
                 }
 
                 for (int viewPtIndex = 0; viewPtIndex < viewPtList.Count; viewPtIndex++)
