@@ -11,9 +11,17 @@ using System.Drawing;
 using NetTopologySuite.Features;
 using Urbanx.Application.Geometry.Extension;
 using Rh = Rhino.Geometry;
+using System.Collections.Concurrent;
 
 namespace UrbanX.Application.Geometry
 {
+    public enum VisDataType
+    {
+        TotalVisArea,
+        VisRatio,
+        normalizedVisRatio
+
+    }
     public enum BoundaryModes
     {
         FreeBoundaries,
@@ -1110,13 +1118,14 @@ namespace UrbanX.Application.Geometry
         #endregion
 
         #region 003_Intersection
-        public static List<double> CalcRaysThroughTri(DMesh3 meshIn, NTS.Geometries.Point[] ptArray, double viewRange, Dictionary<int, double> areaDic, out Dictionary<int, int> MeshIntrCountDic)
+        public static List<double> CalcRaysThroughTri(DMesh3 meshIn, NTS.Geometries.Point[] ptArray, double viewRange, Dictionary<int, double> areaDic, VisDataType visType, DateTime start, out Dictionary<int, int> MeshIntrCountDic)
         {
             DMesh3 mesh = new DMesh3(meshIn);
             var count = mesh.TriangleCount;
             //var viewPtList = NTSPtList2Vector3dList_3d(ptArray);
             DMeshAABBTree3 spatial = new DMeshAABBTree3(mesh);
             spatial.Build();
+            //ToolManagers.TimeCalculation(start, "空间树创建");
 
             Dictionary<int, int> meshIntrCountDic = new Dictionary<int, int>();// meshVertex Index, hit count
             Dictionary<int, double> viewPtIntrAreaDic = new Dictionary<int, double>();//viewPoint Index, hit mesh area
@@ -1124,6 +1133,7 @@ namespace UrbanX.Application.Geometry
             NTS.Index.Quadtree.Quadtree<NTS.Geometries.Point> quadTree = new NTS.Index.Quadtree.Quadtree<NTS.Geometries.Point>();
             for (int i = 0; i < ptArray.Length; i++)
                 quadTree.Insert(ptArray[i].EnvelopeInternal, ptArray[i]);
+            //ToolManagers.TimeCalculation(start, "四叉树创建");
 
             for (int meshIndex = 0; meshIndex < count; meshIndex++)
             {
@@ -1151,7 +1161,8 @@ namespace UrbanX.Application.Geometry
                     if (dis < viewRange)
                         viewPtList.Add(secPt.tog3Pt());
                 }
-                
+                //ToolManagers.TimeCalculation(start, $"{meshIndex} 四叉树排除点");
+
                 for (int viewPtIndex = 0; viewPtIndex < viewPtList.Count; viewPtIndex++)
                 {
                     var direction = viewPtList[viewPtIndex]- centroid;
@@ -1203,20 +1214,317 @@ namespace UrbanX.Application.Geometry
 
                     }
                 }
+                
             }
 
-            var visRatio =new List<double>(areaDic.Count);
-            for (int i = 0; i < areaDic.Count; i++) {
-                if (!viewPtIntrAreaDic.ContainsKey(i))
-                {
-                    visRatio.Add(0d);
-                }
-                else
-                {
-                    visRatio.Add(viewPtIntrAreaDic[i] / areaDic[i]);
-                }                
+            var visRatio = new List<double>(areaDic.Count);
+            switch (visType)
+            {
+                case VisDataType.TotalVisArea:
+                    for (int i = 0; i < areaDic.Count; i++)
+                    {
+                        if (!viewPtIntrAreaDic.ContainsKey(i))
+                            visRatio.Add(0d);
+                        else
+                            visRatio.Add(viewPtIntrAreaDic[i]);
+                    }
+                    break;
+                case VisDataType.VisRatio:
+                    for (int i = 0; i < areaDic.Count; i++)
+                    {
+                        if (!viewPtIntrAreaDic.ContainsKey(i))
+                            visRatio.Add(0d);
+                        else
+                            visRatio.Add(viewPtIntrAreaDic[i] / areaDic[i]);
+                    }
+                    break;
+                case VisDataType.normalizedVisRatio:
+                    var total = viewPtIntrAreaDic.Values.ToList().Sum();
+                    for (int i = 0; i < areaDic.Count; i++)
+                    {
+                        if (!viewPtIntrAreaDic.ContainsKey(i))
+                            visRatio.Add(0d);
+                        else
+                            visRatio.Add(viewPtIntrAreaDic[i]/ total);
+                    }
+                    break;
             }
-                
+            //ToolManagers.TimeCalculation(start, "vis值计算");
+
+            MeshIntrCountDic = meshIntrCountDic;
+            return visRatio;
+        }
+
+        public static List<double> CalcRaysThroughTriParallel(DMesh3 meshIn, NTS.Geometries.Point[] ptArray, double viewRange, Dictionary<int, double> areaDic, VisDataType visType, DateTime start, out ConcurrentDictionary<int, int> MeshIntrCountDic)
+        {
+            DMesh3 mesh = new DMesh3(meshIn);
+            var count = mesh.TriangleCount;
+            //var viewPtList = NTSPtList2Vector3dList_3d(ptArray);
+            DMeshAABBTree3 spatial = new DMeshAABBTree3(mesh);
+            spatial.Build();
+            //ToolManagers.TimeCalculation(start, "空间树创建");
+
+            ConcurrentDictionary<int, int> meshIntrCountDic = new ConcurrentDictionary<int, int>();// meshVertex Index, hit count
+            ConcurrentDictionary<int, double> viewPtIntrAreaDic = new ConcurrentDictionary<int, double>();//viewPoint Index, hit mesh area
+
+            NTS.Index.Quadtree.Quadtree<NTS.Geometries.Point> quadTree = new NTS.Index.Quadtree.Quadtree<NTS.Geometries.Point>();
+            for (int i = 0; i < ptArray.Length; i++)
+                quadTree.Insert(ptArray[i].EnvelopeInternal, ptArray[i]);
+            //ToolManagers.TimeCalculation(start, "四叉树创建");
+
+
+            System.Threading.Tasks.Parallel.For(0, count, meshIndex =>
+            {
+                var trisNormals = -mesh.GetTriNormal(meshIndex);
+                var triArea = mesh.GetTriArea(meshIndex);
+                //debugNormalList.Add(trisNormals);
+                //if (trisNormals.z == 1d || trisNormals.z == -1d)
+                //    continue;
+
+                var centroid = mesh.GetTriCentroid(meshIndex);
+                var vertexList = mesh.GetTriangle(meshIndex);
+                int[] indexList = new int[3] { vertexList.a, vertexList.b, vertexList.c };
+
+                //To Do 用NTS进行四叉树索引
+                var centroid4Tree = centroid.toNTSPt();
+                var mainCoor = new NTS.Geometries.Coordinate(centroid4Tree.X, centroid4Tree.Y);
+                var tempEnv = Poly2DCreation.CreateEnvelopeFromPt(centroid4Tree, viewRange);
+                var secPtListQuery = quadTree.Query(tempEnv);
+                List<Vector3d> viewPtList = new List<Vector3d>();
+                for (int j = 0; j < secPtListQuery.Count; j++)
+                {
+                    var secPt = secPtListQuery[j];
+                    NTS.Geometries.Coordinate secCoor = new NTS.Geometries.Coordinate(secPt.X, secPt.Y);
+                    double dis = mainCoor.Distance(secCoor);
+                    if (dis < viewRange)
+                        viewPtList.Add(secPt.tog3Pt());
+                }
+                //ToolManagers.TimeCalculation(start, $"{meshIndex} 四叉树排除点");
+
+                for (int viewPtIndex = 0; viewPtIndex < viewPtList.Count; viewPtIndex++)
+                {
+                    var direction = viewPtList[viewPtIndex] - centroid;
+
+                    //判定方向，是否同向
+                    var angle = (trisNormals).Dot(direction);
+
+                    //判定距离，是否在视域内
+                    var distance = centroid.Distance(viewPtList[viewPtIndex]);
+
+                    //debugAngleList.Add(angle);
+                    //debugDistanceList.Add(distance);
+
+                    if (angle > 0 && distance < viewRange)
+                    {
+                        #region 计算被击中的次数
+                        Ray3d ray = new Ray3d(viewPtList[viewPtIndex], -direction);
+                        int hit_tid = spatial.FindNearestHitTriangle(ray);
+                        if (hit_tid != DMesh3.InvalidID)
+                        {
+                            #region 计算射线距离
+                            double hit_dist = -1d;
+                            IntrRay3Triangle3 intr = MeshQueries.TriangleIntersection(mesh, hit_tid, ray);
+                            //hit_dist = centroid.Distance(ray.PointAt(intr.RayParameter));
+                            #endregion
+
+                            //double intrDistance=ray.PointAt(rayT).Distance(viewPtList[viewPtIndex]);
+                            if (Math.Abs(intr.RayParameter - distance) < 0.0001)
+                            {
+                                if (viewPtIntrAreaDic.ContainsKey(viewPtIndex))
+                                    viewPtIntrAreaDic[viewPtIndex] += triArea;
+                                else
+                                    viewPtIntrAreaDic.TryAdd(viewPtIndex, triArea);
+
+                                for (int vertexIndex = 0; vertexIndex < 3; vertexIndex++)
+                                {
+                                    if (meshIntrCountDic.ContainsKey(indexList[vertexIndex]))
+                                    {
+                                        meshIntrCountDic[indexList[vertexIndex]] += 1;
+                                    }
+                                    else
+                                    {
+                                        meshIntrCountDic.TryAdd(indexList[vertexIndex], 1);
+                                    }
+                                }
+                            }
+                        }
+                        #endregion
+
+                    }
+                }
+                //ToolManagers.TimeCalculation(start, $"{meshIndex} 判断相切");
+            });
+
+            //ToolManagers.TimeCalculation(start, "相切计算");
+
+            var visRatio = new List<double>(areaDic.Count);
+            switch (visType)
+            {
+                case VisDataType.TotalVisArea:
+                    for (int i = 0; i < areaDic.Count; i++)
+                    {
+                        if (!viewPtIntrAreaDic.ContainsKey(i))
+                            visRatio.Add(0d);
+                        else
+                            visRatio.Add(viewPtIntrAreaDic[i]);
+                    }
+                    break;
+                case VisDataType.VisRatio:
+                    for (int i = 0; i < areaDic.Count; i++)
+                    {
+                        if (!viewPtIntrAreaDic.ContainsKey(i))
+                            visRatio.Add(0d);
+                        else
+                            visRatio.Add(viewPtIntrAreaDic[i] / areaDic[i]);
+                    }
+                    break;
+                case VisDataType.normalizedVisRatio:
+                    var total = viewPtIntrAreaDic.Values.ToList().Sum();
+                    for (int i = 0; i < areaDic.Count; i++)
+                    {
+                        if (!viewPtIntrAreaDic.ContainsKey(i))
+                            visRatio.Add(0d);
+                        else
+                            visRatio.Add(viewPtIntrAreaDic[i] / total);
+                    }
+                    break;
+            }
+            //ToolManagers.TimeCalculation(start, "vis值计算");
+
+            MeshIntrCountDic = meshIntrCountDic;
+            return visRatio;
+        }
+
+        public static List<double> CalcRaysThroughTri(DMesh3 meshIn, NTS.Geometries.Point[] ptArray, double viewRange, Dictionary<NTS.Geometries.Point, double> ptAreaDic, VisDataType visType, out Dictionary<int, int> MeshIntrCountDic)
+        {
+            DMesh3 mesh = new DMesh3(meshIn);
+            var count = mesh.TriangleCount;
+            //var viewPtList = NTSPtList2Vector3dList_3d(ptArray);
+            DMeshAABBTree3 spatial = new DMeshAABBTree3(mesh);
+            spatial.Build();
+
+            Dictionary<int, int> meshIntrCountDic = new Dictionary<int, int>();// meshVertex Index, hit count
+            Dictionary<int, double> viewPtIntrAreaDic = new Dictionary<int, double>();//viewPoint Index, hit mesh area
+
+            NTS.Index.Quadtree.Quadtree<NTS.Geometries.Coordinate> quadTree = new NTS.Index.Quadtree.Quadtree<NTS.Geometries.Coordinate>();
+            for (int i = 0; i < ptArray.Length; i++)
+                quadTree.Insert(ptArray[i].EnvelopeInternal, ptArray[i].Coordinate);
+
+            for (int meshIndex = 0; meshIndex < count; meshIndex++)
+            {
+                var trisNormals = -mesh.GetTriNormal(meshIndex);
+                var triArea = mesh.GetTriArea(meshIndex);
+                //debugNormalList.Add(trisNormals);
+                if (trisNormals.z == 1d || trisNormals.z == -1d)
+                    continue;
+
+                var centroid = mesh.GetTriCentroid(meshIndex);
+                var vertexList = mesh.GetTriangle(meshIndex);
+                int[] indexList = new int[3] { vertexList.a, vertexList.b, vertexList.c };
+
+                //To Do 用NTS进行四叉树索引
+                var centroid4Tree = centroid.toNTSPt();
+                var mainCoor = new NTS.Geometries.Coordinate(centroid4Tree.X, centroid4Tree.Y);
+                var tempEnv = Poly2DCreation.CreateEnvelopeFromPt(centroid4Tree, viewRange);
+                var secPtListQuery = quadTree.Query(tempEnv);
+                List<Vector3d> viewPtList = new List<Vector3d>();
+                for (int j = 0; j < secPtListQuery.Count; j++)
+                {
+                    var secPt = secPtListQuery[j];
+                    NTS.Geometries.Coordinate secCoor = new NTS.Geometries.Coordinate(secPt.X, secPt.Y);
+                    double dis = mainCoor.Distance(secCoor);
+                    if (dis < viewRange)
+                        viewPtList.Add(new NTS.Geometries.Point(secPt).tog3Pt());
+                }
+
+                for (int viewPtIndex = 0; viewPtIndex < viewPtList.Count; viewPtIndex++)
+                {
+                    var direction = viewPtList[viewPtIndex] - centroid;
+
+                    //判定方向，是否同向
+                    var angle = (trisNormals).Dot(direction);
+
+                    //判定距离，是否在视域内
+                    var distance = centroid.Distance(viewPtList[viewPtIndex]);
+
+                    //debugAngleList.Add(angle);
+                    //debugDistanceList.Add(distance);
+
+                    if (angle > 0 && distance < viewRange)
+                    {
+                        #region 计算被击中的次数
+                        Ray3d ray = new Ray3d(viewPtList[viewPtIndex], -direction);
+                        int hit_tid = spatial.FindNearestHitTriangle(ray);
+                        if (hit_tid != DMesh3.InvalidID)
+                        {
+                            #region 计算射线距离
+                            double hit_dist = -1d;
+                            IntrRay3Triangle3 intr = MeshQueries.TriangleIntersection(mesh, hit_tid, ray);
+                            //hit_dist = centroid.Distance(ray.PointAt(intr.RayParameter));
+                            #endregion
+
+                            //double intrDistance=ray.PointAt(rayT).Distance(viewPtList[viewPtIndex]);
+                            if (Math.Abs(intr.RayParameter - distance) < 0.0001)
+                            {
+                                if (viewPtIntrAreaDic.ContainsKey(viewPtIndex))
+                                    viewPtIntrAreaDic[viewPtIndex] += triArea;
+                                else
+                                    viewPtIntrAreaDic.Add(viewPtIndex, triArea);
+
+
+                                for (int vertexIndex = 0; vertexIndex < 3; vertexIndex++)
+                                {
+                                    if (meshIntrCountDic.ContainsKey(indexList[vertexIndex]))
+                                    {
+                                        meshIntrCountDic[indexList[vertexIndex]] += 1;
+                                    }
+                                    else
+                                    {
+                                        meshIntrCountDic.Add(indexList[vertexIndex], 1);
+                                    }
+                                }
+                            }
+                        }
+                        #endregion
+
+                    }
+                }
+            }
+
+            var visRatio = new List<double>(ptArray.Length);
+            switch (visType)
+            {
+                case VisDataType.TotalVisArea:
+                    for (int i = 0; i < ptArray.Length; i++)
+                    {
+                        if (!viewPtIntrAreaDic.ContainsKey(i))
+                            visRatio.Add(0d);
+                        else
+                            visRatio.Add(viewPtIntrAreaDic[i]);
+                    }
+                    break;
+                case VisDataType.VisRatio:
+
+                    Dictionary<int, double> areaDic= Poly2DCreation.ContainsAreaInPts(ptArray, ptAreaDic, viewRange);
+                    for (int i = 0; i < ptArray.Length; i++)
+                    {
+                        if (!viewPtIntrAreaDic.ContainsKey(i))
+                            visRatio.Add(0d);
+                        else
+                            visRatio.Add(viewPtIntrAreaDic[i] / areaDic[i]);
+                    }
+                    break;
+                case VisDataType.normalizedVisRatio:
+                    var total = viewPtIntrAreaDic.Values.ToList().Sum();
+                    for (int i = 0; i < ptArray.Length; i++)
+                    {
+                        if (!viewPtIntrAreaDic.ContainsKey(i))
+                            visRatio.Add(0d);
+                        else
+                            visRatio.Add(viewPtIntrAreaDic[i] / total);
+                    }
+                    break;
+            }
 
             MeshIntrCountDic = meshIntrCountDic;
             return visRatio;
@@ -1403,6 +1711,33 @@ namespace UrbanX.Application.Geometry
         }
 
         public static DMesh3 ApplyColorsBasedOnRays(DMesh3 mesh, Dictionary<int, int> hitTrianglesDic, Colorf originColor, Colorf DestnationColor)
+        {
+            DMesh3 meshIn = new DMesh3(mesh);
+            try
+            {
+                var maxNumber = hitTrianglesDic.Values.Max();
+
+                int i = 0;
+
+                foreach (var item in hitTrianglesDic)
+                {
+                    //var scalarValue = item.Value / (float)maxNumber;
+                    var scalarValue = (float)Math.Log(item.Value, maxNumber);
+                    var tempColor = Colorf.Lerp(originColor, DestnationColor, scalarValue);
+                    meshIn.SetVertexColor(item.Key, tempColor);
+                    i++;
+                }
+
+            }
+            catch
+            {
+                throw new MyException("there is no intersection between brep and view point");
+            }
+
+            return meshIn;
+        }
+
+        public static DMesh3 ApplyColorsBasedOnRays(DMesh3 mesh, ConcurrentDictionary<int, int> hitTrianglesDic, Colorf originColor, Colorf DestnationColor)
         {
             DMesh3 meshIn = new DMesh3(mesh);
             try

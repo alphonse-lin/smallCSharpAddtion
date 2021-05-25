@@ -13,6 +13,12 @@ using System.Linq;
 
 namespace UrbanX.Application.Geometry
 {
+    public enum JSONGeo
+    {
+        Point,
+        LineString,
+        Polygon
+    }
     public class Poly2DCreation
     {
         public static NTS.Geometries.Geometry[] CreateCircle(Vector2d[] origins, double radius)
@@ -56,8 +62,6 @@ namespace UrbanX.Application.Geometry
 
         public static Coordinate[][] ReadJsonData2D(string jsonFilePath)
         {
-
-
             StreamReader sr = File.OpenText(jsonFilePath);
             var feactureCollection = GeoJsonReader.GetFeatureCollectionFromJson(sr.ReadToEnd());
             Coordinate[][] polygonResult = new Coordinate[feactureCollection.Count][];
@@ -68,6 +72,39 @@ namespace UrbanX.Application.Geometry
                 polygonResult[i] = jsonDic.Coordinates;
             }
             return polygonResult;
+        }
+
+        public static T[] ReadJsonData2D<T>(string jsonFilePath, JSONGeo geotype)
+        {
+            StreamReader sr = File.OpenText(jsonFilePath);
+            var feactureCollection = GeoJsonReader.GetFeatureCollectionFromJson(sr.ReadToEnd());
+            T[] result = new T[feactureCollection.Count];
+
+            switch (geotype)
+            {
+                case JSONGeo.Point:
+                    for (int i = 0; i < feactureCollection.Count; i++)
+                    {
+                        var jsonDic = feactureCollection[i].Geometry;
+                        NTS.Geometries.Point pt = new NTS.Geometries.Point(jsonDic.Coordinates[0]);
+                        result[i] = (T)(object)pt;
+                    }
+                    break;
+                case JSONGeo.LineString:
+                    for (int i = 0; i < feactureCollection.Count; i++)
+                    {
+                        var jsonDic = feactureCollection[i].Geometry;
+                        NTS.Geometries.LineString line = new NTS.Geometries.LineString(jsonDic.Coordinates);
+                        result[i] = (T)(object)line;
+                    }
+                    break;
+                case JSONGeo.Polygon:
+                    break;
+                default:
+                    break;
+            }
+               
+            return result;
         }
 
         public static FeatureCollection BuildFeatureCollection(NTS.Geometries.Geometry[] geosInfo)
@@ -190,9 +227,10 @@ namespace UrbanX.Application.Geometry
             return secPtListCollection;
         }
 
-        public static Dictionary<int, double> ContainsAreaInPts(NTS.Geometries.Point[] mainPtList, NTS.Geometries.Point[] secPtList, Dictionary<NTS.Geometries.Point, double> ptAreaDic, double radius = 300)
+        public static Dictionary<int, double> ContainsAreaInPts(NTS.Geometries.Point[] mainPtList, Dictionary<NTS.Geometries.Point, double> ptAreaDic, double radius = 300)
         {
             NTS.Index.Quadtree.Quadtree<NTS.Geometries.Point> quadTree = new NTS.Index.Quadtree.Quadtree<NTS.Geometries.Point>();
+            var secPtList = ptAreaDic.Keys.ToArray();
             for (int i = 0; i < secPtList.Length; i++)
                 quadTree.Insert(secPtList[i].EnvelopeInternal, secPtList[i]);
 
@@ -262,17 +300,20 @@ namespace UrbanX.Application.Geometry
             return new Envelope(ptLeftDown, ptRightUp);
         }
 
-        public static List<NTS.Geometries.Point> DivideLineString(NTS.Geometries.LineString line, double dis)
+        public static List<NTS.Geometries.Point> DivideLineString(NTS.Geometries.LineString line, double dis, out int ptCount)
         {
             NTS.LinearReferencing.LengthIndexedLine index = new NTS.LinearReferencing.LengthIndexedLine(line);
             double temp = index.EndIndex;
-            var ptList = new List<NTS.Geometries.Point>(Convert.ToInt32(Math.Floor(temp/dis)));
+            var _ptCount = Convert.ToInt32(Math.Floor(temp / dis));
+            var ptList = new List<NTS.Geometries.Point>(_ptCount);
             //var ptList = new List<NTS.Geometries.Point>();
             for (double j = 0; j < temp; j += dis)
             {
                 var pt = index.ExtractPoint(j);
                 ptList.Add(new NTS.Geometries.Point(pt.X,pt.Y, 0));
             }
+
+            ptCount = _ptCount;
             return ptList;
         }
     }

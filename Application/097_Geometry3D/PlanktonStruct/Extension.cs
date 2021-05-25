@@ -120,6 +120,25 @@ namespace Urbanx.Application.Geometry.Extension
             return new Vector3d(ptIn.X, ptIn.Y, ptIn.Z);
         }
 
+        public static void ExportMeshAsObj(this DMesh3 mesh, string path,  bool color = false)
+        {
+            WriteOptions writeOption = new WriteOptions()
+            {
+                bWriteBinary = false,
+                bPerVertexNormals = false,
+                bPerVertexColors = color,
+                bWriteGroups = false,
+                bPerVertexUVs = false,
+                bCombineMeshes = false,
+                bWriteMaterials = false,
+                ProgressFunc = null,
+                //MaterialFilePath = @"E:\114_temp\008_代码集\002_extras\smallCharpTool\Application\data\geometryTest\exportColor2.mtl",
+                RealPrecisionDigits = 15       // double
+                                               //RealPrecisionDigits = 7        // float
+            };
+            IOWriteResult result = StandardMeshWriter.WriteFile(path, new List<WriteMesh>() { new WriteMesh(mesh) }, writeOption);
+        }
+
         /// <summary>
         /// arrange ptList into clockwise
         /// </summary>
