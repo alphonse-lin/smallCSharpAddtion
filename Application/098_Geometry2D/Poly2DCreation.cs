@@ -304,10 +304,10 @@ namespace UrbanX.Application.Geometry
         {
             NTS.LinearReferencing.LengthIndexedLine index = new NTS.LinearReferencing.LengthIndexedLine(line);
             double temp = index.EndIndex;
-            var _ptCount = Convert.ToInt32(Math.Floor(temp / dis));
+            var _ptCount = Convert.ToInt32(Math.Ceiling(temp / dis))-1;
             var ptList = new List<NTS.Geometries.Point>(_ptCount);
             //var ptList = new List<NTS.Geometries.Point>();
-            for (double j = 0; j < temp; j += dis)
+            for (double j = dis; j < temp; j += dis)
             {
                 var pt = index.ExtractPoint(j);
                 ptList.Add(new NTS.Geometries.Point(pt.X,pt.Y, 0));

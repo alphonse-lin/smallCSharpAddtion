@@ -13,14 +13,20 @@ namespace UrbanX.Application.Intersection
         public int ptCount { get; set; }
         private double _dis { get; set; }
 
+        public Road(string jsonPath)
+        {
+
+        }
+
         public Road(int Index, NTS.Geometries.LineString RoadGeo, double Dis)
         {
             index = Index;
             _dis = Dis;
+            roadGeo = RoadGeo;
             roadPts = DividedRoad();
         }
 
-        private List<NTS.Geometries.Point> DividedRoad()
+        public List<NTS.Geometries.Point> DividedRoad()
         {
             var ptList = Poly2DCreation.DivideLineString(roadGeo, _dis, out int pointCount);
             ptCount = pointCount;
@@ -30,13 +36,20 @@ namespace UrbanX.Application.Intersection
 
     public class Roads
     {
-        public NTS.Geometries.MultiLineString RoadGeos;
+        public NTS.Geometries.MultiLineString RoadGeosAsMultiLS;
+        public NTS.Geometries.LineString[] RoadGeosAsLS;
         public double[] Score;
 
         public Roads(NTS.Geometries.LineString[] roads,double[] score)
         {
-            RoadGeos = new NTS.Geometries.MultiLineString(roads);
+            RoadGeosAsMultiLS = new NTS.Geometries.MultiLineString(roads);
+            RoadGeosAsLS = roads;
             Score = score;
+        }
+
+        public static NTS.Geometries.LineString[] ReadJson(string roadPath)
+        {
+            return Poly2DCreation.ReadJsonData2D<NTS.Geometries.LineString>(roadPath,JSONGeo.LineString);
         }
     }
 }
