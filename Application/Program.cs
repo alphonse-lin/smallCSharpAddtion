@@ -1087,26 +1087,40 @@ namespace UrbanX.Application
             #endregion
 
             #region 002_完整
-            string buildingFilePath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\building_center.geojson";
-            string exportMeshPath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\export_collection_center_remesh_20210526.obj";
-            string exportGeoJSONPath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\temp_data_20210526.geojson";
-            string roadFilePath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\road\road_data.geojson";
+            //string buildingFilePath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\building_center.geojson";
+            //string exportMeshPath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\export_collection_center_remesh_20210526.obj";
+            //string exportGeoJSONPath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\temp_data_20210526.geojson";
+            //string roadFilePath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\road\road_data.geojson";
 
-            //RoadIntrBuildings.Prepare(buildingFilePath,new string[] { "baseHeight", "brepHeight" }, exportMeshPath,exportGeoJSONPath,3);
-            //ToolManagers.TimeCalculation(start, "准备数据");
+            ////RoadIntrBuildings.Prepare(buildingFilePath,new string[] { "baseHeight", "brepHeight" }, exportMeshPath,exportGeoJSONPath,3);
+            ////ToolManagers.TimeCalculation(start, "准备数据");
 
-            var result = RoadIntrBuildings.Build(roadFilePath, exportMeshPath, exportGeoJSONPath, 200, 300, VisDataType.VisRatio, start, out DMesh3 MeshOutput);
-            ToolManagers.TimeCalculation(start, "计算结束");
+            //var result = RoadIntrBuildings.Build(roadFilePath, exportMeshPath, exportGeoJSONPath, 200, 300, VisDataType.VisRatio, start, out DMesh3 MeshOutput);
+            //ToolManagers.TimeCalculation(start, "计算结束");
 
-            var fcExport = Poly2DCreation.BuildFeatureCollection(result.RoadGeosAsLS,result.Score);
-            var debug_path_result = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\road\debugPathResult.geojson";
-            MeshCreation.ExportGeoJSON(fcExport,debug_path_result);
+            //var fcExport = Poly2DCreation.BuildFeatureCollection(result.RoadGeosAsLS,result.Score);
+            //var debug_path_result = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\road\debugPathResult.geojson";
+            //MeshCreation.ExportGeoJSON(fcExport,debug_path_result);
 
-            var meshOutputPath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\road\IntrMesh.obj";
-            MeshOutput.ExportMeshAsObj(meshOutputPath,true);
+            //var meshOutputPath = @"E:\114_temp\008_代码集\002_extras\smallCSharpAddtion\Application\data\geometryTest\road\IntrMesh.obj";
+            //MeshOutput.ExportMeshAsObj(meshOutputPath,true);
 
-            ToolManagers.TimeCalculation(start, "输出geojson，输出obj");
+            //ToolManagers.TimeCalculation(start, "输出geojson，输出obj");
             #endregion
+            #endregion
+
+            #region 010_输出mesh
+            var jsonFilePath = @"C:\Users\CAUPD-BJ141\Downloads\query\query.geojson";
+            string exportPath = @"C:\Users\CAUPD-BJ141\Downloads\query\query.obj";
+
+            //读取mesh
+            var inputDataCollection = MeshCreation.ReadJsonData(jsonFilePath, "ABOVE_FLOO", out double[] heightCollection, out _);
+            ToolManagers.TimeCalculation(start, "读取");
+
+            //创建mesh simple，输出中心点与面积
+            var simpleMeshes = MeshCreation.ExtrudeMeshFromPt(inputDataCollection, heightCollection);
+            MeshCreation.ExportMeshAsObj(exportPath, simpleMeshes, false);
+            ToolManagers.TimeCalculation(start, "挤出模型");
             #endregion
 
             #endregion

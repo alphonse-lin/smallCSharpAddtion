@@ -127,7 +127,6 @@ namespace UrbanX.Application
             root_index = double.Parse(treeIndex[10]);
             dwb_c_index = double.Parse(treeIndex[11]);
             c_co2_weight_ratio = double.Parse(treeIndex[12]);
-
         }
     }
 }
